@@ -1,4 +1,4 @@
-package entity;
+package com.bigstock.sharedComponents.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

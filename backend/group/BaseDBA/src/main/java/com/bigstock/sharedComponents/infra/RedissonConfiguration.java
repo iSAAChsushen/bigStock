@@ -1,4 +1,4 @@
-package infra;
+package com.bigstock.sharedComponents.infra;
 
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;

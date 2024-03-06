@@ -1,4 +1,4 @@
-package schedule.infra;
+package com.bigstock.schedule.infra;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

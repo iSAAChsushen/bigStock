@@ -1,4 +1,4 @@
-package entity;
+package com.bigstock.sharedComponents.entity;
 
 import java.math.BigDecimal;
 

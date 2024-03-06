@@ -1,4 +1,4 @@
-package schedule.utils;
+package com.bigstock.schedule.utils;
 
 import java.io.File;
 import java.time.Duration;

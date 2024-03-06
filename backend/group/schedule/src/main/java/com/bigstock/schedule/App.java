@@ -1,4 +1,4 @@
-package schedule;
+package com.bigstock.schedule;
 
 
 import org.springframework.boot.SpringApplication;

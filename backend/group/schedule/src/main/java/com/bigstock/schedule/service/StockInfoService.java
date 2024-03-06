@@ -1,11 +1,12 @@
-package schedule.service;
+package com.bigstock.schedule.service;
 
 import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.bigstock.sharedComponents.repository.StockInfoRepository;
+
 import lombok.RequiredArgsConstructor;
-import repository.StockInfoRepository;
 
 @Service
 @RequiredArgsConstructor
