@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bigstock.sharedComponents.entity.ShareholderStructure;
-import com.bigstock.sharedComponents.service.ShareholderStructureService;
+import com.bigstock.sharedComponent.entity.ShareholderStructure;
+import com.bigstock.sharedComponent.service.ShareholderStructureService;
 
 import lombok.RequiredArgsConstructor;
 

@@ -4,8 +4,8 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.bigstock.sharedComponents.entity.ShareholderStructure;
-import com.bigstock.sharedComponents.service.ShareholderStructureService;
+import com.bigstock.sharedComponent.entity.ShareholderStructure;
+import com.bigstock.sharedComponent.service.ShareholderStructureService;
 
 import lombok.RequiredArgsConstructor;
 

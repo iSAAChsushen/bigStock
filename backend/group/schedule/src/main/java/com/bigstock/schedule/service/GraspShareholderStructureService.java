@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.redisson.api.RList;
+import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -14,8 +14,8 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.bigstock.schedule.utils.ChromeDriverUtils;
-import com.bigstock.sharedComponents.entity.ShareholderStructure;
-import com.bigstock.sharedComponents.service.ShareholderStructureService;
+import com.bigstock.sharedComponent.entity.ShareholderStructure;
+import com.bigstock.sharedComponent.service.ShareholderStructureService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +30,7 @@ public class GraspShareholderStructureService {
 	private String chromeDriverPath;
 	@Value("schedule.tdccQryStockUrl")
 	private String tdccQryStockUrl;
-	
+
 	private final RedissonClient redissonClient;
 
 	private final ShareholderStructureService shareholderStructureService;
@@ -62,24 +62,24 @@ public class GraspShareholderStructureService {
 			List<ShareholderStructure> shareholderStructures = weekInfos.stream().map(weekInfo -> {
 				return createShareholderStructure(weekInfo, stockCode, stockName);
 			}).toList();
-			refres(stockCode, shareholderStructures);
+			shareholderStructureService.insert(shareholderStructures);
+			refresh(stockCode, shareholderStructures);
 		}
 	}
-	
 
-	private void refres(String stockCode, List<ShareholderStructure> shareholderStructures) {
-		shareholderStructureService.insert(shareholderStructures);
-		// 使用Redisson客户端获取列表
-        RList<List<ShareholderStructure>> weekInfoList = redissonClient.getList(stockCode);
-        // 移除最旧的周数据
-        if (weekInfoList.size() >= 26) {
-            weekInfoList.remove(0); // 移除列表第一个元素，即最旧的数据
-        }
-        // 插入最新周数据到列表末尾
-        weekInfoList.add(shareholderStructures);
-        weekInfoList.expire(Duration.ofHours(24)); 
+	private void refresh(String stockCode, List<ShareholderStructure> shareholderStructures) {
+		// 设置最大缓存大小
+		RMapCache<String, ShareholderStructure> weekInfoMapCache = redissonClient.getMapCache(stockCode);
+		weekInfoMapCache.setMaxSize(26); // 设置缓存最大大小为 26 条
+
+		// 插入最新的缓存数据
+		for (ShareholderStructure ss : shareholderStructures) {
+			weekInfoMapCache.put(ss.getWeekOfYear(), ss);
+		}
+		// 设置缓存数据的过期时间
+		weekInfoMapCache.expire(Duration.ofHours(24));
 	}
-	
+
 	private ShareholderStructure createShareholderStructure(Map<Integer, String> weekInfo, String stockCode,
 			String stockName) {
 		ShareholderStructure shareholderStructure = new ShareholderStructure();

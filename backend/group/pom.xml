@@ -17,7 +17,7 @@
 		<module>biz</module>
 		<module>gateway</module>
 		<module>schedule</module>
-		<module>shared-components</module>
+		<module>shared-component</module>
 	</modules>
 	<dependencies>
 		<dependency>

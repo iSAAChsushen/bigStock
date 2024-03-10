@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.bigstock.sharedComponents.repository.StockInfoRepository;
+import com.bigstock.sharedComponent.repository.StockInfoRepository;
 
 import lombok.RequiredArgsConstructor;
 
