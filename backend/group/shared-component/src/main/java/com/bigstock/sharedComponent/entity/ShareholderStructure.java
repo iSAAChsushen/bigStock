@@ -1,7 +1,5 @@
 package com.bigstock.sharedComponent.entity;
 
-import java.math.BigDecimal;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -12,7 +10,7 @@ import lombok.ToString;
 @Entity
 @ToString
 @Data
-@Table(schema = "big_stock", name = "shareholder_structure")
+@Table(schema = "bstock", name = "shareholder_structure")
 public class ShareholderStructure {
 	@Id
 	@Column(name = "id")
@@ -31,7 +29,7 @@ public class ShareholderStructure {
 	private String countDate;
 
 	@Column(name = "closing_price")
-	private BigDecimal closingPrice;
+	private String closingPrice;
 
 	@Column(name = "price_change")
 	private String priceChange;
@@ -40,50 +38,50 @@ public class ShareholderStructure {
 	private String priceChangePercent;
 
 	@Column(name = "tdcc_stock")
-	private BigDecimal tdccStock;
+	private String tdccStock;
 
 	@Column(name = "less_1_board_lot")
-	private BigDecimal lessThanOneBoardLot;
+	private String lessThanOneBoardLot;
 
 	@Column(name = "between_1_and_5_board_lot")
-	private BigDecimal betweenOneAndFiveBoardLot;
+	private String betweenOneAndFiveBoardLot;
 
 	@Column(name = "between_5_and_10_board_lot")
-	private BigDecimal betweenFiveAndTenBoardLot;
+	private String betweenFiveAndTenBoardLot;
 
 	@Column(name = "between_10_and_15_board_lot")
-	private BigDecimal betweenTenAndFifteenBoardLot;
+	private String betweenTenAndFifteenBoardLot;
 
 	@Column(name = "between_15_and_20_board_lot")
-	private BigDecimal betweenFifteenAndTwentyBoardLot;
+	private String betweenFifteenAndTwentyBoardLot;
 
 	@Column(name = "between_20_and_30_board_lot")
-	private BigDecimal betweenTwentyAndThirtyBoardLot;
+	private String betweenTwentyAndThirtyBoardLot;
 
 	@Column(name = "between_30_and_40_board_lot")
-	private BigDecimal betweenThirtyAndFortyBoardLot;
+	private String betweenThirtyAndFortyBoardLot;
 
 	@Column(name = "between_40_and_50_board_lot")
-	private BigDecimal betweenFortyAndFiftyBoardLot;
+	private String betweenFortyAndFiftyBoardLot;
 
 	@Column(name = "between_50_and_100_board_lot")
-	private BigDecimal betweenFiftyAndOneHundredBoardLot;
+	private String betweenFiftyAndOneHundredBoardLot;
 
 	@Column(name = "between_100_and_200_board_lot")
-	private BigDecimal betweenOneHundredAndTwoHundredBoardLot;
+	private String betweenOneHundredAndTwoHundredBoardLot;
 
 	@Column(name = "between_200_and_400_board_lot")
-	private BigDecimal betweenTwoHundredAndFourHundredBoardLot;
+	private String betweenTwoHundredAndFourHundredBoardLot;
 
 	@Column(name = "between_400_and_600_board_lot")
-	private BigDecimal betweenFourHundredAndSixHundredBoardLot;
+	private String betweenFourHundredAndSixHundredBoardLot;
 
 	@Column(name = "between_600_and_800_board_lot")
-	private BigDecimal betweenSixHundredAndEightHundredBoardLot;
+	private String betweenSixHundredAndEightHundredBoardLot;
 
 	@Column(name = "between_800_and_1000_board_lot")
-	private BigDecimal betweenEightHundredAndOneThousandBoardLot;
+	private String betweenEightHundredAndOneThousandBoardLot;
 
 	@Column(name = "over_1000_board_lot")
-	private BigDecimal overOneThousandBoardLot;
+	private String overOneThousandBoardLot;
 }

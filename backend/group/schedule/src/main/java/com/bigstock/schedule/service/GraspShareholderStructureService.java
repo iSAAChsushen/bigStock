@@ -1,6 +1,5 @@
 package com.bigstock.schedule.service;
 
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +16,7 @@ import com.bigstock.schedule.utils.ChromeDriverUtils;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
 import com.bigstock.sharedComponent.service.ShareholderStructureService;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -26,10 +26,26 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GraspShareholderStructureService {
 
-	@Value("schedule.chromeDriverPath")
-	private String chromeDriverPath;
+	@Value("schedule.chromeDriverPath.windows.active")
+	private boolean windowsActive;
+
+	@Value("schedule.chromeDriverPath.windows.path")
+	private String windowsChromeDriverPath;
+
+	@Value("schedule.chromeDriverPath.linux.active")
+	private boolean linuxActive;
+
+	@Value("schedule.chromeDriverPath.linux.path")
+	private String linuxChromeDriverPath;
+
 	@Value("schedule.tdccQryStockUrl")
 	private String tdccQryStockUrl;
+	
+	@Value("schedule.listedCompanyUrl")
+	private String listedCompanyUrl;
+	
+	@Value("schedule.overTheCounterUrl")
+	private String overTheCounterUrl;
 
 	private final RedissonClient redissonClient;
 
@@ -56,8 +72,9 @@ public class GraspShareholderStructureService {
 
 	private void refreshStockLatestInfo(String stockCode, String stockName, String latestCountDateStr)
 			throws InterruptedException {
-		List<Map<Integer, String>> weekInfos = ChromeDriverUtils.graspStockInfo(chromeDriverPath, tdccQryStockUrl,
-				stockCode, latestCountDateStr);
+		List<Map<Integer, String>> weekInfos = ChromeDriverUtils.graspShareholderStructure(
+				windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, tdccQryStockUrl, stockCode,
+				latestCountDateStr);
 		if (CollectionUtils.isNotEmpty(weekInfos)) {
 			List<ShareholderStructure> shareholderStructures = weekInfos.stream().map(weekInfo -> {
 				return createShareholderStructure(weekInfo, stockCode, stockName);
@@ -88,30 +105,36 @@ public class GraspShareholderStructureService {
 			switch (key) {
 			case 0 -> shareholderStructure.setWeekOfYear(value);
 			case 1 -> shareholderStructure.setCountDate(value);
-			case 2 -> shareholderStructure.setClosingPrice(new BigDecimal(value));
+			case 2 -> shareholderStructure.setClosingPrice(value);
 			case 3 -> shareholderStructure.setPriceChange(value);
 			case 4 -> shareholderStructure.setPriceChangePercent(value);
-			case 5 -> shareholderStructure.setTdccStock(new BigDecimal(value));
-			case 6 -> shareholderStructure.setLessThanOneBoardLot(new BigDecimal(value));
-			case 7 -> shareholderStructure.setBetweenOneAndFiveBoardLot(new BigDecimal(value));
-			case 8 -> shareholderStructure.setBetweenFiveAndTenBoardLot(new BigDecimal(value));
-			case 9 -> shareholderStructure.setBetweenTenAndFifteenBoardLot(new BigDecimal(value));
-			case 10 -> shareholderStructure.setBetweenFifteenAndTwentyBoardLot(new BigDecimal(value));
-			case 11 -> shareholderStructure.setBetweenTwentyAndThirtyBoardLot(new BigDecimal(value));
-			case 12 -> shareholderStructure.setBetweenThirtyAndFortyBoardLot(new BigDecimal(value));
-			case 13 -> shareholderStructure.setBetweenFortyAndFiftyBoardLot(new BigDecimal(value));
-			case 14 -> shareholderStructure.setBetweenFiftyAndOneHundredBoardLot(new BigDecimal(value));
-			case 15 -> shareholderStructure.setBetweenOneHundredAndTwoHundredBoardLot(new BigDecimal(value));
-			case 16 -> shareholderStructure.setBetweenTwoHundredAndFourHundredBoardLot(new BigDecimal(value));
-			case 17 -> shareholderStructure.setBetweenFourHundredAndSixHundredBoardLot(new BigDecimal(value));
-			case 18 -> shareholderStructure.setBetweenSixHundredAndEightHundredBoardLot(new BigDecimal(value));
-			case 19 -> shareholderStructure.setBetweenEightHundredAndOneThousandBoardLot(new BigDecimal(value));
-			case 20 -> shareholderStructure.setOverOneThousandBoardLot(new BigDecimal(value));
+			case 5 -> shareholderStructure.setTdccStock(value);
+			case 6 -> shareholderStructure.setLessThanOneBoardLot(value);
+			case 7 -> shareholderStructure.setBetweenOneAndFiveBoardLot(value);
+			case 8 -> shareholderStructure.setBetweenFiveAndTenBoardLot(value);
+			case 9 -> shareholderStructure.setBetweenTenAndFifteenBoardLot(value);
+			case 10 -> shareholderStructure.setBetweenFifteenAndTwentyBoardLot(value);
+			case 11 -> shareholderStructure.setBetweenTwentyAndThirtyBoardLot(value);
+			case 12 -> shareholderStructure.setBetweenThirtyAndFortyBoardLot(value);
+			case 13 -> shareholderStructure.setBetweenFortyAndFiftyBoardLot(value);
+			case 14 -> shareholderStructure.setBetweenFiftyAndOneHundredBoardLot(value);
+			case 15 -> shareholderStructure.setBetweenOneHundredAndTwoHundredBoardLot(value);
+			case 16 -> shareholderStructure.setBetweenTwoHundredAndFourHundredBoardLot(value);
+			case 17 -> shareholderStructure.setBetweenFourHundredAndSixHundredBoardLot(value);
+			case 18 -> shareholderStructure.setBetweenSixHundredAndEightHundredBoardLot(value);
+			case 19 -> shareholderStructure.setBetweenEightHundredAndOneThousandBoardLot(value);
+			case 20 -> shareholderStructure.setOverOneThousandBoardLot(value);
 			}
 		});
 		shareholderStructure.setStockCode(stockCode);
 		shareholderStructure.setStockName(stockName);
 		shareholderStructure.setId(stockCode + stockName + shareholderStructure.getWeekOfYear());
 		return shareholderStructure;
+	}
+
+	@PostConstruct
+//	@Scheduled(cron = "0 0 8 ? * SAT")
+	public void updateStockInfo() throws InterruptedException {
+		ChromeDriverUtils.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, listedCompanyUrl, overTheCounterUrl);
 	}
 }

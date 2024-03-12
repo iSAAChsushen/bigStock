@@ -1,5 +1,5 @@
 server:
-  port: 18080
+  port: 18081
   shutdown: graceful
   ssl:
     enabled: false
@@ -7,10 +7,10 @@ server:
     key-store-password: ENC(KXcrgSoHASfYwGk2mmH8sRwkr4+DHY/kez+vPE0Pz2pRoYGWMjqw+r1eVs/41i6m)
     key-store-type: JKS
   servlet:
-    context-path: /api
+    context-path: /schedule
 spring:
   application:
-    name: big-stcok-backend-biz
+    name: big-stcok-backend-schedule
   main:
     allow-bean-definition-overriding: true
   datasource:
@@ -43,3 +43,14 @@ spring:
 logging:
   config: classpath:logback.xml
 
+schedule:
+  chromeDriverPath:
+    windows: 
+      active: true	
+      path: D:/sts/chromedriver-win64/chromedriver.exe
+    linux:
+       active: false
+       path: DD	
+  tdccQryStockUrl: https://www.tdcc.com.tw/portal/zh/smWeb/qryStock
+  listedCompanyUrl: https://www.twse.com.tw/zh/listed/listed/new-listing.html
+  overTheCounterUrl: https://mops.twse.com.tw/mops/web/t51sb01

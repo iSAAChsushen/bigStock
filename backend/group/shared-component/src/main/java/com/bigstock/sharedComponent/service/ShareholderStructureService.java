@@ -43,6 +43,10 @@ public class ShareholderStructureService {
 	public void delete(ShareholderStructure shareholderStructure) {
 		shareholderStructureRepository.delete(shareholderStructure);
 	}
+	
+	public List<String> getAllShareholderStructureStockCode(){
+		return shareholderStructureRepository.getAllShareholderStructureStockCode();
+	}
 
 	public List<ShareholderStructure> getShareholderStructureByStockCodeDesc(String stockCode) {
 		 String key = stockCode;

@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.ToString;
 
 @Entity
-@Table(name = "StockInfo", schema = "big_stock")
+@Table(name = "StockInfo", schema = "bstock")
 @ToString
 @Data
 public class StockInfo {

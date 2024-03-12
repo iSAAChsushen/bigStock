@@ -3,11 +3,14 @@ package com.bigstock.schedule;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
-@SpringBootApplication
+@SpringBootApplication(scanBasePackages = {"com.bigstock.schedule","com.bigstock.sharedComponent"})
+@EnableAspectJAutoProxy(proxyTargetClass = true)
+@EnableCaching
 public class App {
 	public static void main(String[] args) {
-		System.setProperty("webdriver.chrome.driver", "D:/sts/chromedriver-win64/chromedriver.exe");
 		SpringApplication app = new SpringApplication(App.class);
 		app.run(args);
 	}

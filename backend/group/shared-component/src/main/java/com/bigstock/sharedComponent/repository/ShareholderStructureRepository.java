@@ -13,4 +13,6 @@ public interface ShareholderStructureRepository extends JpaRepository<Shareholde
 	@Query(value = "select s from ShareholderStructure s where s.stockCode = :stockCode order by s.countDate desc")
 	public List<ShareholderStructure> getShareholderStructureByStockCodeDesc(@Param("stockCode") String stockCode);
 
+	@Query(value = "select DISTINCT  s.stockCode from ShareholderStructure s")
+	public List<String> getAllShareholderStructureStockCode();
 }
