@@ -52,5 +52,4 @@ schedule:
        active: false
        path: DD	
   tdccQryStockUrl: https://www.tdcc.com.tw/portal/zh/smWeb/qryStock
-  listedCompanyUrl: https://www.twse.com.tw/zh/listed/listed/new-listing.html
   overTheCounterUrl: https://mops.twse.com.tw/mops/web/t51sb01

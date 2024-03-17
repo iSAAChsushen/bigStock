@@ -11,16 +11,26 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import com.bigstock.sharedComponent.entity.StockInfo;
+import com.esotericsoftware.minlog.Log;
+
+import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.XSlf4j;
+
+@Slf4j
 public class ChromeDriverUtils {
 
 	private static final Map<Integer, String> COLUMN_NAME = new HashMap<>();
@@ -29,48 +39,102 @@ public class ChromeDriverUtils {
 		initializeColumnNames();
 	}
 
-	public static List<Map<String, String>> grepStockInfo(String chromeDriverPath, String listedCompanyUrl,
-			String overTheCounterUrl) throws InterruptedException {
+	public static List<StockInfo> grepStockInfo(String chromeDriverPath, String overTheCounterUrl)
+			throws InterruptedException {
 		ChromeDriverService service = new ChromeDriverService.Builder()
 				.usingDriverExecutable(new File(chromeDriverPath)).usingAnyFreePort().build();
-
+		List<StockInfo> stockInfos = Lists.newArrayList();
 		WebDriver driver = new ChromeDriver(service);
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
 		try {
-			driver.get(listedCompanyUrl);
-			WebElement searchButton = wait.until(ExpectedConditions.presenceOfElementLocated(By.className("search")));
-			searchButton.click();
-			Thread.sleep(1500);
-			WebElement selectElement = wait.until(ExpectedConditions.presenceOfElementLocated(By.tagName("select")));
+			driver.get(overTheCounterUrl);
 
-			// 使用 Select 类来操作下拉菜单
-			Select select = new Select(selectElement);
-			// 选择“全部”选项
-			select.selectByValue("-1");
 			Thread.sleep(4000);
-			// 找到 TBODY 元素
-			WebElement tbodyElement = wait
-					.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".rwd-table tbody")));
+			WebElement siiSelectElement = wait
+					.until(ExpectedConditions.presenceOfElementLocated((By.cssSelector("tbody select[name='TYPEK']"))));
 
-			// 找到 TBODY 下的所有 TR 元素
-			List<WebElement> trElements = tbodyElement.findElements(By.tagName("tr"));
+			// 使用 Select 类初始化
+			Select siiTypekSelect = new Select(siiSelectElement);
 
-			// 遍历每个 TR 元素
-			for (WebElement trElement : trElements) {
-				// 找到 TR 元素下的所有 TD 元素
-				List<WebElement> tdElements = trElement.findElements(By.tagName("td"));
+			// 通过 value 属性设置选项值为 "otc"
+			siiTypekSelect.selectByValue("sii");
+			Thread.sleep(2000);
+			WebElement siiCcodeSelectElement = wait
+					.until(ExpectedConditions.presenceOfElementLocated((By.name("code"))));
 
-				// 遍历每个 TD 元素并输出其文本内容
-				for (WebElement tdElement : tdElements) {
-					System.out.print(tdElement.getText() + "\t");
-				}
-				System.out.println(); // 换行
+			// 使用 Select 类初始化
+			Select siiCodeSelect = new Select(siiCcodeSelectElement);
+
+			// 通过可见文本选择空白选项
+			siiCodeSelect.selectByVisibleText("");
+
+			WebElement siiSearchButton = wait.until(
+					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
+			siiSearchButton.click();
+
+//			// 点击按钮
+//			searchButton.click();
+			wait.until(ExpectedConditions
+					.presenceOfElementLocated((By.xpath("//th[@class='tblHead' and contains(text(), '產業類別')]"))));
+			JavascriptExecutor siijs = (JavascriptExecutor) driver;
+			siijs.executeScript("window.scrollTo(0, document.body.scrollHeight);");
+			List<WebElement> siiEvenAndOldRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+					By.xpath("//tr[contains(@class, 'even') or contains(@class, 'odd')]")));
+			for (WebElement webElement : siiEvenAndOldRows) {
+				List<WebElement> cells = webElement.findElements(By.tagName("td"));
+				StockInfo stockInfo = new StockInfo();
+				stockInfo.setStockCode(cells.get(0).getText().trim());
+				stockInfo.setStockName(cells.get(1).getText().trim());
+				stockInfo.setStockType("1");
+				stockInfos.add(stockInfo);
 			}
+
+			driver.get(overTheCounterUrl);
+			Thread.sleep(4000);
+			WebElement otcSelectElement = wait
+					.until(ExpectedConditions.presenceOfElementLocated((By.cssSelector("tbody select[name='TYPEK']"))));
+
+			// 使用 Select 类初始化
+			Select otcTypekSelect = new Select(otcSelectElement);
+
+			// 通过 value 属性设置选项值为 "otc"
+			otcTypekSelect.selectByValue("otc");
+			Thread.sleep(2000);
+			WebElement otcCcodeSelectElement = wait
+					.until(ExpectedConditions.presenceOfElementLocated((By.name("code"))));
+
+			// 使用 Select 类初始化
+			Select otcCodeSelect = new Select(otcCcodeSelectElement);
+
+			// 通过可见文本选择空白选项
+			otcCodeSelect.selectByVisibleText("");
+
+			WebElement otcSearchButton = wait.until(
+					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
+			otcSearchButton.click();
+
+//			// 点击按钮
+//			searchButton.click();
+			wait.until(ExpectedConditions
+					.presenceOfElementLocated((By.xpath("//th[@class='tblHead' and contains(text(), '產業類別')]"))));
+			JavascriptExecutor js = (JavascriptExecutor) driver;
+			js.executeScript("window.scrollTo(0, document.body.scrollHeight);");
+			List<WebElement> evenAndOldRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+					By.xpath("//tr[contains(@class, 'even') or contains(@class, 'odd')]")));
+			for (WebElement webElement : evenAndOldRows) {
+				List<WebElement> cells = webElement.findElements(By.tagName("td"));
+				StockInfo stockInfo = new StockInfo();
+				stockInfo.setStockCode(cells.get(0).getText().trim());
+				stockInfo.setStockName(cells.get(1).getText().trim());
+				stockInfo.setStockType("0");
+				stockInfos.add(stockInfo);
+			}
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
 		} finally {
 			driver.quit();
 		}
-		return null;
-
+		return stockInfos;
 	}
 
 	public static List<Map<Integer, String>> graspShareholderStructure(String chromeDriverPath, String tdccQryStockUrl,
@@ -89,12 +153,12 @@ public class ChromeDriverUtils {
 			List<String> tdccSelectoptions = dates.getOptions().stream().map(WebElement::getText).toList();
 			DateTimeFormatter lastestDateformatter = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+			LocalDate latestCountDate = LocalDate.parse(latestCountDateStr, lastestDateformatter);
 			for (String tdccSelectoption : tdccSelectoptions) {
 				LocalDate selectDate = LocalDate.parse(tdccSelectoption, lastestDateformatter);
-				LocalDate latestCountDate = LocalDate.parse(latestCountDateStr, lastestDateformatter);
 
-				if (selectDate.compareTo(latestCountDate) < 0) {
-					continue;
+				if (selectDate.compareTo(latestCountDate) <= 0) {
+					break;
 				}
 
 				driver.get("https://www.tdcc.com.tw/portal/zh/smWeb/qryStock");
@@ -178,7 +242,17 @@ public class ChromeDriverUtils {
 				long closestDuration = Long.MAX_VALUE;
 
 				for (String dateString : dateAndPrice.keySet()) {
-					LocalDate date = LocalDate.parse(dateString.replace("/", "-"));
+				       // 指定日期字符串格式
+			        DateTimeFormatter dateStringformatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+
+
+			        // 将民国日期转换为西元日期
+			        String[] parts = dateString.split("/");
+			        int year = Integer.parseInt(parts[0]) + 1911; // 民国转换为西元
+			        String standardDateString = year + "/" + parts[1] + "/" + parts[2];
+
+			        // 解析标准日期字符串为 LocalDate 对象
+			        LocalDate date = LocalDate.parse(standardDateString, dateStringformatter);
 					long duration = Math.abs(selectDate.until(date).getDays());
 
 					if (duration < closestDuration) {

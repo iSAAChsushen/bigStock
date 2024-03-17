@@ -8,7 +8,7 @@ import lombok.Data;
 import lombok.ToString;
 
 @Entity
-@Table(name = "StockInfo", schema = "bstock")
+@Table(name = "stock_info", schema = "bstock")
 @ToString
 @Data
 public class StockInfo {
@@ -21,6 +21,6 @@ public class StockInfo {
 	private String stockName;
 
 	@Column(name = "stock_type")
-	private Boolean stockType;
+	private String stockType;
 
 }

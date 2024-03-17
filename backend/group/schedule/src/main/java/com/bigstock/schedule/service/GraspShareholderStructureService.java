@@ -1,8 +1,8 @@
 package com.bigstock.schedule.service;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.collections4.CollectionUtils;
 import org.redisson.api.RMapCache;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import com.bigstock.schedule.utils.ChromeDriverUtils;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
+import com.bigstock.sharedComponent.entity.StockInfo;
 import com.bigstock.sharedComponent.service.ShareholderStructureService;
 
 import jakarta.annotation.PostConstruct;
@@ -26,25 +27,22 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class GraspShareholderStructureService {
 
-	@Value("schedule.chromeDriverPath.windows.active")
+	@Value("${schedule.chromeDriverPath.windows.active}")
 	private boolean windowsActive;
 
-	@Value("schedule.chromeDriverPath.windows.path")
+	@Value("${schedule.chromeDriverPath.windows.path}")
 	private String windowsChromeDriverPath;
 
-	@Value("schedule.chromeDriverPath.linux.active")
+	@Value("${schedule.chromeDriverPath.linux.active}")
 	private boolean linuxActive;
 
-	@Value("schedule.chromeDriverPath.linux.path")
+	@Value("${schedule.chromeDriverPath.linux.path}")
 	private String linuxChromeDriverPath;
 
-	@Value("schedule.tdccQryStockUrl")
+	@Value("${schedule.tdccQryStockUrl}")
 	private String tdccQryStockUrl;
-	
-	@Value("schedule.listedCompanyUrl")
-	private String listedCompanyUrl;
-	
-	@Value("schedule.overTheCounterUrl")
+
+	@Value("${schedule.overTheCounterUrl}")
 	private String overTheCounterUrl;
 
 	private final RedissonClient redissonClient;
@@ -53,21 +51,49 @@ public class GraspShareholderStructureService {
 
 	private final StockInfoService stockInfoService;
 
+	@PostConstruct
 	// 每周日早上8点触发更新
-	@Scheduled(cron = "0 0 8 ? * SUN")
+//	@Scheduled(cron = "0 0 8 ? * SUN")
 	public void updateShareholderStructure() {
 		// 先抓DB裡面全部的代號資料
 		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
 		allDataBaseStockCode.stream().forEach(stockCode -> {
-			ShareholderStructure lastesShareholderStructure = shareholderStructureService
-					.getShareholderStructureByStockCodeDesc(stockCode).get(0);
 			try {
-				refreshStockLatestInfo(stockCode, lastesShareholderStructure.getStockName(),
-						lastesShareholderStructure.getCountDate());
+				List<ShareholderStructure> ssList = shareholderStructureService
+						.getShareholderStructureByStockCodeDesc(stockCode);
+				if (!ssList.isEmpty()) {
+					ShareholderStructure lastesShareholderStructure = shareholderStructureService
+							.getShareholderStructureByStockCodeDesc(stockCode).get(0);
+					String weekOfYear = lastesShareholderStructure.getWeekOfYear();
+					int wIndex = weekOfYear.indexOf('W');
+					String year = weekOfYear.substring(wIndex - 2, wIndex);
+					refreshStockLatestInfo(stockCode, lastesShareholderStructure.getStockName(),
+							convertToDate(year + lastesShareholderStructure.getCountDate()));
+				} else {
+					Optional<StockInfo> stockInfoOp = stockInfoService.findById(stockCode);
+					if (stockInfoOp.isPresent()) {
+						log.info("ssList is empty : {}, so create data", stockCode);
+						refreshStockLatestInfo(stockCode, stockInfoOp.get().getStockName(), "20200210");
+					} else {
+						log.info(String.format("ssList is empty : %1s , and StockInfo is not exsits either", stockCode)   );
+					}
+				}
 			} catch (InterruptedException e) {
 				log.error(e.getMessage(), e);
 			}
 		});
+	}
+
+	private String convertToDate(String inputDate) {
+		// 解析年份的后两位
+		String year = "20" + inputDate.substring(0, 2);
+
+		// 解析周数和天数
+		String mounth = inputDate.substring(2, 4);
+		String day = inputDate.substring(5);
+
+		// 将日期格式化为字符串
+		return year + mounth + day;
 	}
 
 	private void refreshStockLatestInfo(String stockCode, String stockName, String latestCountDateStr)
@@ -80,21 +106,21 @@ public class GraspShareholderStructureService {
 				return createShareholderStructure(weekInfo, stockCode, stockName);
 			}).toList();
 			shareholderStructureService.insert(shareholderStructures);
-			refresh(stockCode, shareholderStructures);
+			clearCache(stockCode);
 		}
 	}
 
-	private void refresh(String stockCode, List<ShareholderStructure> shareholderStructures) {
+	private void clearCache(String stockCode) {
 		// 设置最大缓存大小
-		RMapCache<String, ShareholderStructure> weekInfoMapCache = redissonClient.getMapCache(stockCode);
-		weekInfoMapCache.setMaxSize(26); // 设置缓存最大大小为 26 条
+		RMapCache<String, RMapCache<String, ShareholderStructure>> outerMapCache = redissonClient
+				.getMapCache("shareholderStructures");
 
+		// 尝试从缓存获取数据
+		RMapCache<String, ShareholderStructure> innerMapCache = outerMapCache.get(stockCode);
+		innerMapCache.delete();
+		outerMapCache.remove(stockCode);
 		// 插入最新的缓存数据
-		for (ShareholderStructure ss : shareholderStructures) {
-			weekInfoMapCache.put(ss.getWeekOfYear(), ss);
-		}
-		// 设置缓存数据的过期时间
-		weekInfoMapCache.expire(Duration.ofHours(24));
+//		sortedValues.stream()
 	}
 
 	private ShareholderStructure createShareholderStructure(Map<Integer, String> weekInfo, String stockCode,
@@ -132,9 +158,11 @@ public class GraspShareholderStructureService {
 		return shareholderStructure;
 	}
 
-	@PostConstruct
-//	@Scheduled(cron = "0 0 8 ? * SAT")
+//	@PostConstruct
+	@Scheduled(cron = "0 0 8 ? * SAT")
 	public void updateStockInfo() throws InterruptedException {
-		ChromeDriverUtils.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, listedCompanyUrl, overTheCounterUrl);
+		List<StockInfo> stockInfos = ChromeDriverUtils
+				.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, overTheCounterUrl);
+		stockInfoService.insertAll(stockInfos);
 	}
 }

@@ -1,9 +1,11 @@
 package com.bigstock.schedule.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import com.bigstock.sharedComponent.entity.StockInfo;
 import com.bigstock.sharedComponent.repository.StockInfoRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -15,5 +17,13 @@ public class StockInfoService {
 
 	public List<String> getAllStockCode() {
 		return stockInfoRepository.getAllStockCode();
+	}
+	
+	public List<StockInfo> insertAll(List<StockInfo> stockInfos){
+		return stockInfoRepository.saveAll(stockInfos);
+	}
+	
+	public Optional<StockInfo> findById(String stockCode){
+		return stockInfoRepository.findById(stockCode);
 	}
 }

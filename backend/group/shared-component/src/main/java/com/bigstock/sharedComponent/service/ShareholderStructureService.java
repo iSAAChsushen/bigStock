@@ -1,6 +1,9 @@
 package com.bigstock.sharedComponent.service;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -43,27 +46,39 @@ public class ShareholderStructureService {
 	public void delete(ShareholderStructure shareholderStructure) {
 		shareholderStructureRepository.delete(shareholderStructure);
 	}
-	
-	public List<String> getAllShareholderStructureStockCode(){
+
+	public List<String> getAllShareholderStructureStockCode() {
 		return shareholderStructureRepository.getAllShareholderStructureStockCode();
 	}
 
 	public List<ShareholderStructure> getShareholderStructureByStockCodeDesc(String stockCode) {
-		 String key = stockCode;
-		    RMapCache<String, ShareholderStructure> mapCache = redissonClient.getMapCache("shareholderStructures");
-		    
-		    // 尝试从缓存获取数据
-		    ShareholderStructure cachedData = mapCache.get(key);
-		    if (cachedData != null) {
-		        // 缓存中有数据，直接返回
-		        return Collections.singletonList(cachedData);
-		    } else {
-		        // 缓存中没有数据，从数据库获取
-		        List<ShareholderStructure> dbData = shareholderStructureRepository.getShareholderStructureByStockCodeDesc(stockCode);
-		        // 将从数据库获取的数据存入缓存
-		        dbData.forEach(ss -> mapCache.put(stockCode + ":" + ss.getWeekOfYear(), ss, 24, TimeUnit.HOURS));
-		        return dbData;
-		    }
+		String key = stockCode;
+		RMapCache<String, RMapCache<String, ShareholderStructure>> outerMapCache = redissonClient
+				.getMapCache("shareholderStructures");
+
+		// 尝试从缓存获取数据
+		RMapCache<String, ShareholderStructure> innerMapCache = outerMapCache.get(key);
+		if (innerMapCache != null) {
+			innerMapCache.expire(Duration.ofDays(10));
+			List<ShareholderStructure> ss = new ArrayList<>(innerMapCache.readAllValues());
+			Collections.sort(ss, Comparator.comparing(ShareholderStructure::getId).reversed()); 
+			return ss;
+		} else {
+			// 缓存中没有数据，从数据库获取
+			List<ShareholderStructure> dbDatas = shareholderStructureRepository
+					.getShareholderStructureByStockCodeDesc(stockCode);
+
+			// 构建内部的 Hash 表缓存
+			innerMapCache = redissonClient.getMapCache(stockCode);
+			for (ShareholderStructure dbData : dbDatas) {
+				innerMapCache.put(dbData.getWeekOfYear(), dbData, 2, TimeUnit.DAYS);
+			}
+
+			// 将内部的 Hash 表缓存存入外部的 Hash 表缓存
+			outerMapCache.put(key, innerMapCache, 13, TimeUnit.DAYS);
+
+			return dbDatas;
+		}
 	}
 
 }

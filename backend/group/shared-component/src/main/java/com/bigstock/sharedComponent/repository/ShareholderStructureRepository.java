@@ -10,7 +10,7 @@ import com.bigstock.sharedComponent.entity.ShareholderStructure;
 
 public interface ShareholderStructureRepository extends JpaRepository<ShareholderStructure, String> {
 
-	@Query(value = "select s from ShareholderStructure s where s.stockCode = :stockCode order by s.countDate desc")
+	@Query(value = "select s from ShareholderStructure s where s.stockCode = :stockCode order by s.weekOfYear desc")
 	public List<ShareholderStructure> getShareholderStructureByStockCodeDesc(@Param("stockCode") String stockCode);
 
 	@Query(value = "select DISTINCT  s.stockCode from ShareholderStructure s")
