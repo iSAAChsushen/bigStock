@@ -1,9 +1,12 @@
 package com.bigstock.auth.infra;
 
 import java.io.IOException;
-import java.util.Collections;
+import java.time.Duration;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.redisson.api.RBucket;
+import org.redisson.api.RedissonClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -19,19 +22,25 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jws;
+import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSecurity
 @Slf4j
+@RequiredArgsConstructor
 public class SecurityConfig {
 
+	private final RedissonClient redissonClient;
+	
 	@Bean
 	public JwtAuthenticationConverter jwtAuthenticationConverter() {
 		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
@@ -52,6 +61,9 @@ public class SecurityConfig {
 	    return http.build();
 	}
 
+	/**
+	 * 判斷token的腳色
+	 */
 	public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 	    @Override
@@ -65,13 +77,28 @@ public class SecurityConfig {
 
 	            try {
 	                // Parse the JWT token using jjwt
-	                Claims claims = Jwts.parser().setSigningKey("your-secret-key").build().parseClaimsJws(token).getBody();
+	            	Jws<Claims> jwsClaims = Jwts.parser().setSigningKey("your-secret-key").build().parseClaimsJws(token);
+	                Claims claims = jwsClaims.getBody();
+	                JwsHeader jwsHeader  = jwsClaims.getHeader();
+	                RBucket<Long> tokenBucket = redissonClient.getBucket("TOKEN_" + token);
 
-	                // Extract relevant information from claims (e.g., username, roles)
+	                if (tokenBucket != null) {
+	                    // Token 存在，就延長2小時
+	                	tokenBucket.expire(Duration.ofHours(2));
+	                } else {
+	                    // Token 不存在就回錯
+	                	throw new ExpiredJwtException(jwsHeader, claims, "JWT token expired");
+	                }
+	                // Extract roles from the claims (assuming roles are stored under a "roles" claim)
+	                List<String> roles = claims.get("roles", List.class);
+
+	                // Convert roles to SimpleGrantedAuthority objects
 	                String username = claims.getSubject();
-	                List<SimpleGrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority("ROLE_USER")); // Adapt based on roles in claims
+	                List<SimpleGrantedAuthority> authorities = roles.stream()
+	                        .map(SimpleGrantedAuthority::new)
+	                        .collect(Collectors.toList());
 
-	                // Create Authentication object
+	                // Create Authentication object with extracted roles
 	                Authentication authentication = new UsernamePasswordAuthenticationToken(username, null, authorities);
 
 	                SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -80,11 +107,11 @@ public class SecurityConfig {
 	                response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid JWT token");
 	                return;
 	            } catch (ExpiredJwtException e) {
-	            	log.error("Expired JWT token: {}", e.getMessage());
+	                log.error("Expired JWT token: {}", e.getMessage());
 	                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "JWT token expired");
 	                return;
 	            } catch (Exception e) {
-	            	log.error("An error occurred while parsing the JWT token.", e);
+	                log.error("An error occurred while parsing the JWT token.", e);
 	                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
 	                return;
 	            }
