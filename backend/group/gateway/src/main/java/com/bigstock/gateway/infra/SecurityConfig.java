@@ -5,6 +5,9 @@ import java.time.Duration;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.crypto.SecretKey;
+import javax.crypto.spec.SecretKeySpec;
+
 import org.json.JSONObject;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -13,13 +16,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.openfeign.support.SpringMvcContract;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.web.authentication.BearerTokenAuthenticationFilter;
 import org.springframework.security.web.SecurityFilterChain;
@@ -47,9 +56,31 @@ import lombok.extern.slf4j.Slf4j;
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 @Slf4j
 @RequiredArgsConstructor
 public class SecurityConfig {
+
+	@Value("${server.oauth2.secret-key}")
+	private String secretKey;
+	@Value("${server.oauth2.url}")
+	private String oauth2Url;
+
+	@Autowired
+	private RedissonClient redissonClient;
+
+
+	@Bean
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+	    return authenticationConfiguration.getAuthenticationManager();
+	}
+	
+	
+	@Bean
+	public JwtDecoder jwtDecoder() {
+		SecretKey signingKey = new SecretKeySpec(secretKey.getBytes(), "HMAC-SHA-512");
+		return NimbusJwtDecoder.withSecretKey(signingKey).build();
+	}
 
 	@Bean
 	public JwtAuthenticationConverter jwtAuthenticationConverter() {
@@ -59,12 +90,20 @@ public class SecurityConfig {
 	}
 
 	@Bean
+	public BCryptPasswordEncoder bCryptPasswordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+
+	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests(authorize -> authorize.requestMatchers("/public/**").permitAll()
-				.requestMatchers("/private/**").authenticated())
+		http.authorizeHttpRequests(authorize -> authorize
+				// Allow login endpoint without authentication
+				.requestMatchers("/login").permitAll()
+				// Require authentication for all other requests
+				.anyRequest().authenticated())
 				.oauth2ResourceServer(
 						oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())))
-				.addFilterBefore(new JwtAuthenticationFilter(), BearerTokenAuthenticationFilter.class)
+				.addFilterAfter(new JwtAuthenticationFilter(), BearerTokenAuthenticationFilter.class)
 				.csrf(AbstractHttpConfigurer::disable); // Explicitly disable CSRF
 
 		return http.build();
@@ -75,15 +114,6 @@ public class SecurityConfig {
 	 */
 	public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-		@Autowired
-		private RedissonClient redissonClient;
-
-		@Value("${server.oauth2.url}")
-		private String oauth2Url;
-
-		@Value("${server.oauth2.secret-key}")
-		private String secretKey;
-		
 		private String extractTokenFromHeader(HttpServletRequest request) {
 			String token = request.getHeader("Authorization");
 			if (token != null && token.startsWith("Bearer ")) {
@@ -94,6 +124,7 @@ public class SecurityConfig {
 
 		/**
 		 * 解析Access Token內容
+		 * 
 		 * @param token access Token
 		 * @return Claims token的聲明資訊
 		 * @throws JwtException
@@ -110,16 +141,12 @@ public class SecurityConfig {
 		 * @param claims
 		 * @return
 		 */
-		private boolean handleTokenRefresh(Claims claims) {
-			// 先取得使用者帳號
-			String username = claims.getSubject();
-			// 從Redis 取得refresh token
-			Object refreshToken = redissonClient.getBucket("refresh_token:" + username).get();
-
-			if (refreshToken != null) {
-				Authentication newAuthentication = tryRefreshToken(refreshToken.toString());
+		private boolean handleTokenRefresh(Claims claims, RBucket<Object> refreshToken) {
+			if (refreshToken.isExists()) {
+				Authentication newAuthentication = tryRefreshToken(refreshToken.get().toString());
 				if (newAuthentication != null) {
 					SecurityContextHolder.getContext().setAuthentication(newAuthentication);
+					refreshToken.expire(Duration.ofHours(4));
 					return true;
 				}
 			}
@@ -159,23 +186,25 @@ public class SecurityConfig {
 			try {
 				String token = extractTokenFromHeader(request);
 				Claims claims = parseJwtToken(token);
+				RBucket<Object> refreshToken = redissonClient.getBucket("refresh_token:" + claims.getSubject());
 				RBucket<Object> accessTokenRB = redissonClient.getBucket("access_token:" + claims.getSubject());
+
 				// 假設accessTokenRB不存在或client 帶的token與Redis的token不依樣的時候，依樣導回登入頁
-				if (!accessTokenRB.isExists() || !token.equals(accessTokenRB.get().toString())) {
+				if (!accessTokenRB.isExists() || !token.equals(accessTokenRB.get().toString().split(" ")[1])) {
 					response.sendRedirect("/login");
 				}
 				// 先檢查 access token 是否有效
 				if (accessTokenRB.isExists()) {
+					refreshToken.expire(Duration.ofHours(4));
 					accessTokenRB.expire(Duration.ofHours(1));
 					Authentication authentication = createAuthentication(claims);
-					SecurityContextHolder.getContext().setAuthentication(authentication);
-
+					SecurityContextHolder.getContextHolderStrategy().getContext().setAuthentication(authentication);
 					filterChain.doFilter(request, response);
 					return;
 				}
 
 				// 如果 access token 無效，再進行 refresh token 的流程
-				if (handleTokenRefresh(claims)) {
+				if (handleTokenRefresh(claims, refreshToken)) {
 					filterChain.doFilter(request, response);
 					return;
 				}
@@ -203,19 +232,8 @@ public class SecurityConfig {
 
 			// Get the new access token and refresh token
 			String newAccessToken = response.getString("access_token");
-			String newRefreshToken = response.getString("refresh_token");
 
 			// Store the new refresh token in Redis using redissonClient
-			String username = response.getString("username"); // Assuming username is returned in the response
-			// 將新的refresh token 倒回去Redis
-			RBucket<Object> refreshTokenRb = redissonClient.getBucket("refresh_token:" + username);
-			refreshTokenRb.set(newRefreshToken);
-			refreshTokenRb.expire(Duration.ofHours(4));
-			// 將新的access token倒回去Redis
-			RBucket<Object> accessTokenRb = redissonClient.getBucket("access_token:" + username);
-			accessTokenRb.set(newAccessToken);
-			accessTokenRb.expire(Duration.ofHours(1));
-			// 解析AccessToken 的聲明
 			return createAuthentication(parseJwtToken(newAccessToken));
 		}
 

@@ -36,7 +36,7 @@ public class UserAccount {
     private Date birthDate;
 
     @Column(name = "role_id")
-    private Long roleId;
+    private String roleId;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "create_time")

@@ -1,0 +1,32 @@
+server:
+  port: 10081  
+  oauth2:
+    url: 127.0.0.1:10093  
+    secret-key: 4903837210390382930293802938293802932038203920382039203820392038
+spring:
+  application:
+    name: auth-gateway
+  redis:
+    host: 127.0.0.1
+    port: 6379
+    timeout: 5000
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres??currentSchema=bstock
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        show-sql: true
+#  cloud:
+#    consul:
+#      host: 127.0.0.1
+#      port: 8500  
+
+#logging:
+#  config: classpath:logback.xml
