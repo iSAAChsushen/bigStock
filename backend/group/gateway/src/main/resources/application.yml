@@ -1,7 +1,7 @@
 server:
   port: 10081  
   oauth2:
-    url: 127.0.0.1:10093  
+    url: http://127.0.0.1:10093  
     secret-key: 4903837210390382930293802938293802932038203920382039203820392038
 spring:
   application:
@@ -28,5 +28,5 @@ spring:
 #      host: 127.0.0.1
 #      port: 8500  
 
-#logging:
-#  config: classpath:logback.xml
+logging:
+  config: classpath:logback.xml

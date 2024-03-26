@@ -76,14 +76,13 @@ public class OauthTokenService {
 		// 獲取 refresh token 中的資料
 		Claims claims = parseJwtToken(refreshToken);
 		// 建立新的 access token 和 refresh token
-		String newAccessToken = generateAccessToken(claims.getSubject(), claims.get("email", String.class),
-				claims.get("phone", String.class));
+		String newAccessToken = generateAccessToken(claims.getSubject());
 		RBucket<Object> accessTokenRb = redissonClient.getBucket("access_token:" + claims.getSubject());
 		accessTokenRb.set(newAccessToken);
 		accessTokenRb.expire(Duration.ofHours(1));
 //		ROLE_
 		// 返回新的 access token 和 refresh token
-		return new JSONObject().put("access_token", newAccessToken).toString();
+		return newAccessToken;
 	}
 
 	private Claims parseJwtToken(String token) throws JwtException {
@@ -116,18 +115,16 @@ public class OauthTokenService {
 		String token = builder.compact();
 
 		// 返回 Bearer 令牌
-		return "Bearer " + token;
+		return token;
 	}
 
-	public String generateAccessToken(String email, String phone, String subject) {
+	public String generateAccessToken(String subject) {
 		// 使用 Jwts.builder() 建立 JWT
 		JwtBuilder builder = Jwts.builder();
 		Optional<UserAccount> userAccountsOp = Optional.empty();
-		if (email != null && StringUtils.isNotBlank(email)) {
-			userAccountsOp = userAccountService.findByEmailIgnoreCase(email).stream().findFirst();
-		}
-		if (phone != null && StringUtils.isNotBlank(phone)) {
-			userAccountsOp = userAccountService.getByPhone(phone).stream().findFirst();
+			userAccountsOp = userAccountService.findByEmailIgnoreCase(subject).stream().findFirst();
+		if (userAccountsOp.isEmpty()) {
+			userAccountsOp = userAccountService.getByPhone(subject).stream().findFirst();
 		}
 		if (userAccountsOp.isEmpty()) {
 			throw new JwtException("invalid token");

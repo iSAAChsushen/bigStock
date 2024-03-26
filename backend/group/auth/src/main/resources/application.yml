@@ -23,15 +23,6 @@ spring:
     properties:
       hibernate:
         show-sql: true
-#  security:
-#    oauth2:
-#      resourceserver:
-#        jwt:
-#          decoder-enabled: false      
-#  cloud:
-#    consul:
-#      host: 127.0.0.1
-#      port: 8500  
 
 logging:
   config: classpath:logback.xml

@@ -1,5 +1,6 @@
 package com.bigstock.auth.web;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -7,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bigstock.auth.domain.vo.TokenInfo;
 import com.bigstock.auth.domain.vo.UserInloginInfo;
 import com.bigstock.auth.service.OauthTokenService;
 
@@ -17,8 +19,8 @@ public class OauthController {
     private OauthTokenService oauthTokenService;
 
     @PostMapping(value="refreshToken", consumes = MediaType.APPLICATION_JSON_VALUE )
-    public String refreshToken(@RequestBody String refreshToken) {
-        return oauthTokenService.refreshToken(refreshToken);
+    public String refreshToken(@RequestBody TokenInfo refreshTokenInfo) {
+        return oauthTokenService.refreshToken(refreshTokenInfo.getRefreshToken());
     }
     @PostMapping(value="login", consumes = MediaType.APPLICATION_JSON_VALUE)
     public String login(@RequestBody UserInloginInfo userInloginInfo) {

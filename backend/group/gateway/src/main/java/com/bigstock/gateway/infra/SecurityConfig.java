@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
-import org.json.JSONObject;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +33,7 @@ import org.springframework.security.oauth2.server.resource.web.authentication.Be
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.bigstock.gateway.domain.vo.TokenInfo;
 import com.bigstock.gateway.protocol.OAuth2Client;
 
 import feign.Feign;
@@ -190,9 +190,9 @@ public class SecurityConfig {
 				RBucket<Object> accessTokenRB = redissonClient.getBucket("access_token:" + claims.getSubject());
 
 				// 假設accessTokenRB不存在或client 帶的token與Redis的token不依樣的時候，依樣導回登入頁
-				if (!accessTokenRB.isExists() || !token.equals(accessTokenRB.get().toString().split(" ")[1])) {
+				if ((!accessTokenRB.isExists() || !token.equals(accessTokenRB.get().toString().split(" ")[1])) && !refreshToken.isExists()) {
 					response.sendRedirect("/login");
-				}
+				} 
 				// 先檢查 access token 是否有效
 				if (accessTokenRB.isExists()) {
 					refreshToken.expire(Duration.ofHours(4));
@@ -225,13 +225,11 @@ public class SecurityConfig {
 
 			// Create an OAuth2Client instance
 			OAuth2Client oAuth2Client = Feign.builder().contract(new SpringMvcContract()).client(new OkHttpClient())
-					.encoder(new JacksonEncoder()).decoder(new JacksonDecoder()).target(OAuth2Client.class, oauth2Url);
-
+					.encoder(new JacksonEncoder()).target(OAuth2Client.class, oauth2Url);
+			TokenInfo refreshTokenInfo = new TokenInfo();
+			refreshTokenInfo.setRefreshToken(refreshToken);
 			// Call the refresh token API
-			JSONObject response = new JSONObject(oAuth2Client.refreshToken(refreshToken));
-
-			// Get the new access token and refresh token
-			String newAccessToken = response.getString("access_token");
+			String newAccessToken = oAuth2Client.refreshToken(refreshTokenInfo);
 
 			// Store the new refresh token in Redis using redissonClient
 			return createAuthentication(parseJwtToken(newAccessToken));
