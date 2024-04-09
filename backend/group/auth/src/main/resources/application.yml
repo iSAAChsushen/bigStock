@@ -4,8 +4,14 @@ server:
     secret-key: 4903837210390382930293802938293802932038203920382039203820392038
     key: classpath:jwt.pem
 spring:
+  main: 
+    web-application-type: reactive
+    allow-bean-definition-overriding: true
   application:
-    name: auth-server
+    name: big-stock-auth-server
+  consul:
+    host: 127.0.0.1
+    port: 8500    
   redis:
     host: 127.0.0.1
     port: 6379

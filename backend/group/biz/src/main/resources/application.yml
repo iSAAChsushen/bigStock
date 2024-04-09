@@ -10,7 +10,7 @@ server:
     context-path: /api
 spring:
   application:
-    name: big-stcok-backend-biz
+    name: big-stcok-biz
   main:
     allow-bean-definition-overriding: true
   datasource:
@@ -37,9 +37,12 @@ spring:
     port: 6379 
   rabbitmq:
     host: 127.0.0.1
-    port: 15672
+    port: 5672
     username: admin
-    password: rabbitmq       
+    password: rabbitmq
+    virtual-host: /
+    pool:
+      channelCacheSize: 5        
 logging:
   config: classpath:logback.xml
 

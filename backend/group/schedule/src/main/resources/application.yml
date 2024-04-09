@@ -14,7 +14,7 @@ spring:
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres??currentSchema=bstock
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=bstock
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver

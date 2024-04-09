@@ -15,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("Biz")
+@RequestMapping("biz")
 public class BizController {
 
 	private final ShareholderStructureService shareholderStructureService;

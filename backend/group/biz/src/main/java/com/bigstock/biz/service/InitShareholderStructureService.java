@@ -30,7 +30,7 @@ public class InitShareholderStructureService {
 	@Autowired
 	ShareholderStructureService shareholderStructureService;
 
-	@PostConstruct
+//	@PostConstruct
 	public void initShareholderStructure() throws IOException {
 		// 解压缩zip文件
 

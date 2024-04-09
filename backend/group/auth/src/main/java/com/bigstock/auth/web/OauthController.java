@@ -13,7 +13,7 @@ import com.bigstock.auth.domain.vo.UserInloginInfo;
 import com.bigstock.auth.service.OauthTokenService;
 
 @RestController
-@RequestMapping(value = "oauth")
+@RequestMapping(value = "auth")
 public class OauthController {
 	@Autowired
     private OauthTokenService oauthTokenService;
