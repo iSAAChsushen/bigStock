@@ -43,9 +43,9 @@ public class OauthTokenService {
 
 	private final RedissonClient redissonClient;
 
-	private final BCryptPasswordEncoder passwordEncoder; // 假设使用 BCryptPasswordEncoder 加密密码
 
 	public String userLoginHandle(UserInloginInfo userInloginInfo) {
+		BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 		String username = userInloginInfo.getUserName();
 		String password = userInloginInfo.getPassword();
 		Optional<UserAccount> userAccountOp = Optional.empty();
