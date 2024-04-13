@@ -99,7 +99,7 @@ public class OauthTokenService {
 				.orElseThrow(() -> new JwtException("role can not found"));
 		// 設定 JWT 主體
 		builder.subject(subject);
-		builder.claim("roles", Lists.newArrayList("ROLE_"+roleInfo.getRoleName()));
+		builder.claim("roles", Lists.newArrayList(roleInfo.getRoleName()));
 		// 設定 JWT 發行時間
 		builder.issuedAt(new Date());
 
@@ -134,7 +134,7 @@ public class OauthTokenService {
 				.orElseThrow(() -> new JwtException("role can not found"));
 		// 設定 JWT 主體
 		builder.subject(subject);
-		builder.claim("roles", Lists.newArrayList("ROLE_"+roleInfo.getRoleName()));
+		builder.claim("roles", Lists.newArrayList(roleInfo.getRoleName()));
 		// 設定 JWT 發行時間
 		builder.issuedAt(new Date());
 

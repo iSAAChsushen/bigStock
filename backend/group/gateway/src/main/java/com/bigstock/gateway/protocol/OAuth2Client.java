@@ -11,7 +11,7 @@ import com.bigstock.gateway.domain.vo.UserInloginInfo;
 @FeignClient(name = "big-stock-auth-server")
 public interface OAuth2Client {
 
-    @PostMapping(value ="/oauth/refreshToken", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value ="/auth/refreshToken", consumes = MediaType.APPLICATION_JSON_VALUE)
     public String refreshToken(@RequestBody TokenInfo refreshToken);
     
     @PostMapping(value ="/auth/login", consumes = MediaType.APPLICATION_JSON_VALUE)
