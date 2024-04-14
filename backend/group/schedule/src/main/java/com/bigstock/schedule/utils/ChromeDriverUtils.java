@@ -287,6 +287,11 @@ public class ChromeDriverUtils {
 		return weekInfo;
 	}
 
+	
+	public static List<Map<Integer, String>> graspStockPrice(String chromeDriverPath, String stockPriceUrl){
+		
+	}
+	
 	private static void initializeColumnNames() {
 		COLUMN_NAME.put(0, "周別");
 		COLUMN_NAME.put(1, "統計日期");

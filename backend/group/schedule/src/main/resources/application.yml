@@ -53,3 +53,6 @@ schedule:
        path: DD	
   tdccQryStockUrl: https://www.tdcc.com.tw/portal/zh/smWeb/qryStock
   overTheCounterUrl: https://mops.twse.com.tw/mops/web/t51sb01
+  stock-price:
+    tpex: https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&d={dateString}&s=asc
+    twse: https://www.twse.com.tw/pcversion/zh/exchangeReport/MI_INDEX
