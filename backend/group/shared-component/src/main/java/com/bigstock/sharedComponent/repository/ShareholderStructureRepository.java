@@ -15,4 +15,76 @@ public interface ShareholderStructureRepository extends JpaRepository<Shareholde
 
 	@Query(value = "select DISTINCT  s.stockCode from ShareholderStructure s")
 	public List<String> getAllShareholderStructureStockCode();
+	
+
+	@Query(value = "select distinct ( ss.stockCode) from ShareholderStructure ss where ss.weekOfYear = :maxWeekOfYear ")
+	public List<String> getAreadyFinshGrapsStockCode(@Param("maxWeekOfYear") String maxWeekOfYear);
+
+	@Query(value = "select s from ShareholderStructure s where s.weekOfYear between :startDate and :endDate")
+	public List<ShareholderStructure> getShareholderStructureLastTwoWeeks(@Param("startDate") String startDate, @Param("endDate") String endDate);
+
+	@Query(value = " select max(s.weekOfYear) from ShareholderStructure s ")
+	public String getMaxWeekOfYear();
+	
+	@Query(value = " select max(s.week_of_year) from bstock.shareholder_structure s where s.week_of_year  not in (:weekOfYears)", nativeQuery= true)
+	public String getMaxWeekOfYearExcludeSpecificDate(@Param("weekOfYears") List<String> weekOfYears);
+	
+	@Query(value ="select increase.* "
+			+ "from bstock.shareholder_structure increase "
+			+ "where increase.Stock_code in ("
+			+ "    select distinct(a.stock_code) "
+			+ "    from ("
+			+ "        select "
+			+ "            stock_code,"
+			+ "            week_of_year,"
+			+ "            (SUM(CAST(REPLACE(between_400_and_600_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(between_600_and_800_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(between_800_and_1000_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(over_1000_board_lot, ',', '') AS numeric))) as total"
+			+ "        FROM"
+			+ "            bstock.shareholder_structure "
+			+ "        WHERE"
+			+ "            bstock.shareholder_structure.week_of_year = :thirdWeekOfYear"
+			+ "        group by week_of_year, stock_code "
+			+ "        order by stock_code, week_of_year desc"
+			+ "    ) a,"
+			+ "    ("
+			+ "        select "
+			+ "            stock_code,"
+			+ "            week_of_year,"
+			+ "            (SUM(CAST(REPLACE(between_400_and_600_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(between_600_and_800_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(between_800_and_1000_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(over_1000_board_lot, ',', '') AS numeric)) ) as total"
+			+ "        FROM"
+			+ "            bstock.shareholder_structure "
+			+ "        WHERE"
+			+ "            bstock.shareholder_structure.week_of_year = :secondWeekOfYear"
+			+ "        group by week_of_year, stock_code "
+			+ "        order by stock_code, week_of_year desc"
+			+ "    ) b,"
+			+ "    ("
+			+ "        select "
+			+ "            stock_code,"
+			+ "            week_of_year,"
+			+ "            (SUM(CAST(REPLACE(between_400_and_600_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(between_600_and_800_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(between_800_and_1000_board_lot, ',', '') AS numeric)) +"
+			+ "            SUM(CAST(REPLACE(over_1000_board_lot, ',', '') AS numeric)) ) as total"
+			+ "        FROM"
+			+ "            bstock.shareholder_structure "
+			+ "        WHERE"
+			+ "            bstock.shareholder_structure.week_of_year = :firstWeekOfYear"
+			+ "        group by week_of_year, stock_code "
+			+ "        order by stock_code, week_of_year desc"
+			+ "    ) c"
+			+ "    where  (c.total > b.total and b.total > a.total)"
+			+ "    and c.stock_code = b.stock_code"
+			+ "    and b.stock_code = a.stock_code"
+			+ ")"
+			+ "and increase.week_of_year = :firstWeekOfYear"
+			+ "" , nativeQuery= true)
+	public List<ShareholderStructure> getByOverFourHundreLotContinueIncrease(
+			@Param("firstWeekOfYear") String firstWeekOfYear, @Param("secondWeekOfYear") String secondWeekOfYear,
+			@Param("thirdWeekOfYear") String thirdWeekOfYear);
 }

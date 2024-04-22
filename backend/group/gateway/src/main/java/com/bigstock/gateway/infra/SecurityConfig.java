@@ -81,6 +81,9 @@ public class SecurityConfig {
 						.pathMatchers(HttpMethod.POST, "/txn")
 						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
 						.pathMatchers(HttpMethod.POST, "/gateway/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.GET, "/gateway/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.GET, "/biz/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.POST, "/biz/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member")))
 						.pathMatchers(HttpMethod.POST, "/auth/**").permitAll()
 						.pathMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
 						.pathMatchers(HttpMethod.GET, "/actuator/health").permitAll().and()	.oauth2ResourceServer(

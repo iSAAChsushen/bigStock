@@ -1,11 +1,6 @@
 server:
   port: 18081
   shutdown: graceful
-  ssl:
-    enabled: false
-    key-store: classpath:container-sit.testesunbank.com.tw.jks
-    key-store-password: ENC(KXcrgSoHASfYwGk2mmH8sRwkr4+DHY/kez+vPE0Pz2pRoYGWMjqw+r1eVs/41i6m)
-    key-store-type: JKS
   servlet:
     context-path: /schedule
 spring:
@@ -35,15 +30,17 @@ spring:
         min-idle: 10
         max-wait: 100000
     port: 6379 
-  rabbitmq:
-    host: 127.0.0.1
-    port: 15672
-    username: admin
-    password: rabbitmq       
 logging:
   config: classpath:logback.xml
 
 schedule:
+  task:
+    scheduling:
+      cron:
+        expression: 
+          grasp-stock-price: "0 0 20 ? * *"
+          update-shareholder-structure: "0 0 8 ? * SUN"
+          update-stock-info: "0 0 8 ? * SAT"
   chromeDriverPath:
     windows: 
       active: true	
@@ -54,5 +51,6 @@ schedule:
   tdccQryStockUrl: https://www.tdcc.com.tw/portal/zh/smWeb/qryStock
   overTheCounterUrl: https://mops.twse.com.tw/mops/web/t51sb01
   stock-price:
-    tpex: https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&d={dateString}&s=asc
-    twse: https://www.twse.com.tw/pcversion/zh/exchangeReport/MI_INDEX
+    url:
+      tpex: https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&d={dateString}&s=asc
+      twse: https://www.twse.com.tw/pcversion/zh/exchangeReport/MI_INDEX

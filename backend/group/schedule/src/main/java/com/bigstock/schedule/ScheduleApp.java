@@ -9,9 +9,9 @@ import org.springframework.context.annotation.EnableAspectJAutoProxy;
 @SpringBootApplication(scanBasePackages = {"com.bigstock.schedule","com.bigstock.sharedComponent"})
 @EnableAspectJAutoProxy(proxyTargetClass = true)
 @EnableCaching
-public class App {
+public class ScheduleApp {
 	public static void main(String[] args) {
-		SpringApplication app = new SpringApplication(App.class);
+		SpringApplication app = new SpringApplication(ScheduleApp.class);
 		app.run(args);
 	}
 

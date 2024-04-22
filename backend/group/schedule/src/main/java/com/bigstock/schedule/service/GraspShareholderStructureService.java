@@ -53,7 +53,7 @@ public class GraspShareholderStructureService {
 
 	@PostConstruct
 	// 每周日早上8点触发更新
-//	@Scheduled(cron = "0 0 8 ? * SUN")
+//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
 	public void updateShareholderStructure() {
 		// 先抓DB裡面全部的代號資料
 		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
@@ -67,13 +67,17 @@ public class GraspShareholderStructureService {
 					String weekOfYear = lastesShareholderStructure.getWeekOfYear();
 					int wIndex = weekOfYear.indexOf('W');
 					String year = weekOfYear.substring(wIndex - 2, wIndex);
+					List<String> areadyFinshGrapsStockCodes = shareholderStructureService.getAreadyFinshGrapsStockCode(weekOfYear);
+					if(areadyFinshGrapsStockCodes.contains(stockCode)) {
+						return;
+					}
 					refreshStockLatestInfo(stockCode, lastesShareholderStructure.getStockName(),
 							convertToDate(year + lastesShareholderStructure.getCountDate()));
 				} else {
 					Optional<StockInfo> stockInfoOp = stockInfoService.findById(stockCode);
 					if (stockInfoOp.isPresent()) {
 						log.info("ssList is empty : {}, so create data", stockCode);
-						refreshStockLatestInfo(stockCode, stockInfoOp.get().getStockName(), "20200210");
+						refreshStockLatestInfo(stockCode, stockInfoOp.get().getStockName(), "20240405");
 					} else {
 						log.info(String.format("ssList is empty : %1s , and StockInfo is not exsits either", stockCode)   );
 					}
@@ -150,16 +154,17 @@ public class GraspShareholderStructureService {
 			case 18 -> shareholderStructure.setBetweenSixHundredAndEightHundredBoardLot(value);
 			case 19 -> shareholderStructure.setBetweenEightHundredAndOneThousandBoardLot(value);
 			case 20 -> shareholderStructure.setOverOneThousandBoardLot(value);
+			case 21 -> shareholderStructure.setStockTotal(value);
 			}
 		});
 		shareholderStructure.setStockCode(stockCode);
 		shareholderStructure.setStockName(stockName);
-		shareholderStructure.setId(stockCode + stockName + shareholderStructure.getWeekOfYear());
+		shareholderStructure.setId(stockCode + shareholderStructure.getWeekOfYear());
 		return shareholderStructure;
 	}
 
 //	@PostConstruct
-	@Scheduled(cron = "0 0 8 ? * SAT")
+//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
 	public void updateStockInfo() throws InterruptedException {
 		List<StockInfo> stockInfos = ChromeDriverUtils
 				.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, overTheCounterUrl);

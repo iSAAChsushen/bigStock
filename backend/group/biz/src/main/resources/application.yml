@@ -1,11 +1,11 @@
 server:
   port: 18080
   shutdown: graceful
-  ssl:
-    enabled: false
-    key-store: classpath:container-sit.testesunbank.com.tw.jks
-    key-store-password: ENC(KXcrgSoHASfYwGk2mmH8sRwkr4+DHY/kez+vPE0Pz2pRoYGWMjqw+r1eVs/41i6m)
-    key-store-type: JKS
+#  ssl:
+#    enabled: false
+#    key-store: classpath:container-sit.testesunbank.com.tw.jks
+#    key-store-password: ENC(KXcrgSoHASfYwGk2mmH8sRwkr4+DHY/kez+vPE0Pz2pRoYGWMjqw+r1eVs/41i6m)
+#    key-store-type: JKS
   servlet:
     context-path: /api
 spring:

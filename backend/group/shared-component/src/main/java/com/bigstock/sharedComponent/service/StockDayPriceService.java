@@ -4,10 +4,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
-import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 
-import com.bigstock.sharedComponent.entity.SecuritiesFirmsDayOperate;
 import com.bigstock.sharedComponent.entity.StockDayPrice;
 import com.bigstock.sharedComponent.repository.StockDayPriceRepository;
 
@@ -17,10 +15,13 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class StockDayPriceService {
 	private final  StockDayPriceRepository stockDayPriceRepository;
-	private final RedissonClient redissonClient;
 	
 	public StockDayPrice save(StockDayPrice stockDayPrice) {
 		return stockDayPriceRepository.save(stockDayPrice);
+	}
+	
+	public List<StockDayPrice> saveAll(List<StockDayPrice> stockDayPrices) {
+		return stockDayPriceRepository.saveAll(stockDayPrices);
 	}
 	
 	public void deleteByIds(List<StockDayPrice.StockDayPriceId> ids) {
@@ -35,7 +36,7 @@ public class StockDayPriceService {
 		return stockDayPriceRepository.findByStockCode(stockCode);
 	}
 	
-	public List<StockDayPrice> findByStockAndDateRange(String stockCode, Date startDate, Date endDate) {
-		return stockDayPriceRepository.findByStockAndDateRange(stockCode, startDate, endDate);
+	public List<StockDayPrice> findByStockCodeAndDateRange(String stockCode, Date startDate, Date endDate) {
+		return stockDayPriceRepository.findThisWeekStockDayPrices(stockCode, startDate, endDate);
 	}
 }

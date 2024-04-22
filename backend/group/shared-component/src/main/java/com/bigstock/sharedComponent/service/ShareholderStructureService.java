@@ -4,10 +4,12 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import org.redisson.api.RList;
 import org.redisson.api.RMapCache;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
@@ -50,6 +52,33 @@ public class ShareholderStructureService {
 	public List<String> getAllShareholderStructureStockCode() {
 		return shareholderStructureRepository.getAllShareholderStructureStockCode();
 	}
+	
+	public List<ShareholderStructure>  getShareholderStructureLastTwoWeeks(String firstWeekOfYear, String secondWeekOfYear,
+			String thirdWeekOfYear){
+		String key = firstWeekOfYear + secondWeekOfYear + thirdWeekOfYear;
+		RMapCache<String, RList<ShareholderStructure>> outerMapCache = redissonClient
+				.getMapCache("shareholderStructures-lastTwoWeeks");
+		RList<ShareholderStructure> innerListCache = outerMapCache.get(key);
+		if (innerListCache != null) {
+			innerListCache.expire(Duration.ofDays(10));
+			List<ShareholderStructure> ss = innerListCache.readAll();
+			Collections.sort(ss, Comparator.comparing(ShareholderStructure::getId).reversed()); 
+			return ss;
+		} else {
+			// 缓存中没有数据，从数据库获取
+			List<ShareholderStructure> dbDatas = shareholderStructureRepository
+					.getByOverFourHundreLotContinueIncrease(firstWeekOfYear, secondWeekOfYear, thirdWeekOfYear);
+
+			// 构建内部的 Hash 表缓存
+			innerListCache = redissonClient.getList(key);
+			innerListCache.addAll(dbDatas);
+			
+			// 将内部的 Hash 表缓存存入外部的 Hash 表缓存
+			outerMapCache.put(key, innerListCache, 10, TimeUnit.DAYS);
+
+			return dbDatas;
+		}
+	}
 
 	public List<ShareholderStructure> getShareholderStructureByStockCodeDesc(String stockCode) {
 		String key = stockCode;
@@ -80,5 +109,16 @@ public class ShareholderStructureService {
 			return dbDatas;
 		}
 	}
+	
+	public String getMaxWeekOfYear() {
+		return shareholderStructureRepository.getMaxWeekOfYear();
+	}
 
+	public String getMaxWeekOfYearExcludeSpecificDate(List<String> weekOfYears) {
+		return shareholderStructureRepository.getMaxWeekOfYearExcludeSpecificDate(weekOfYears);
+	}
+	
+	public List<String> getAreadyFinshGrapsStockCode(String maxWeekOfYear){
+		return shareholderStructureRepository.getAreadyFinshGrapsStockCode(maxWeekOfYear);
+	}
 }

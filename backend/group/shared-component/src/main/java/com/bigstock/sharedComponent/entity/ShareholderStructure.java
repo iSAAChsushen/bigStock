@@ -1,5 +1,7 @@
 package com.bigstock.sharedComponent.entity;
 
+import java.math.BigInteger;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -84,4 +86,7 @@ public class ShareholderStructure {
 
 	@Column(name = "over_1000_board_lot")
 	private String overOneThousandBoardLot;
+	
+	@Column(name = "stock_total")
+	private String stockTotal;
 }

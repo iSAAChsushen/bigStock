@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.bigstock.biz.service.BizService;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
-import com.bigstock.sharedComponent.service.ShareholderStructureService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -18,11 +18,12 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("biz")
 public class BizController {
 
-	private final ShareholderStructureService shareholderStructureService;
+	private final BizService bizService;
 
 	@GetMapping("stockShareholderStructure/{stockCode}")
 	public ResponseEntity<List<ShareholderStructure>> getStockShareholderStructure(
 			@PathVariable("stockCode") String stockCode) {
-		return ResponseEntity.ok(shareholderStructureService.getShareholderStructureByStockCodeDesc(stockCode));
+		return ResponseEntity.ok(bizService.getStockShareholderStructure(stockCode,52));
 	}
+	
 }

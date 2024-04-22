@@ -1,11 +1,18 @@
 package com.bigstock.schedule.utils;
 
 import java.io.File;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.IsoFields;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,21 +26,32 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestTemplate;
 
 import com.bigstock.sharedComponent.entity.StockInfo;
-import com.esotericsoftware.minlog.Log;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
-import lombok.extern.slf4j.XSlf4j;
 
 @Slf4j
 public class ChromeDriverUtils {
 
-	private static final Map<Integer, String> COLUMN_NAME = new HashMap<>();
+	private static final Map<Integer, String> SHAREHOLDER_STRUCTURE_COLUMN_NAME = new HashMap<>();
+	
+	private static final Map<Integer, String> STOCK_DAY_PRICE_COLUMN_NAME = new HashMap<>();
+	
+	private static final List<String> TWSE_TYPE_LIST = Arrays.asList("01", "02", "03", "04", "05", "06", "07", "21",
+			"22", "08", "09", "10", "11", "12", "13", "24", "25", "26", "27", "28", "29", "30", "31", "14", "15", "16",
+			"17", "18", "9299", "23", "19", "20");
 
 	static {
 		initializeColumnNames();
@@ -182,14 +200,14 @@ public class ChromeDriverUtils {
 				if (isTextPresent && !weekInfo.isEmpty()) {
 					break;
 				}
-				int grabSize = 15;
+				int grabSize = 16;
 				Map<Integer, String> week = new HashMap<>();
 				List<WebElement> rows = tbodyElement.findElements(By.tagName("tr"));
 
 				for (int index = 0; index < grabSize; index++) {
 					WebElement row = rows.get(index);
 					List<WebElement> cells = row.findElements(By.tagName("td"));
-					week.put(index + 6, cells.get(2).getText());
+					week.put(index + 6, cells.get(3).getText());
 				}
 
 				Thread.sleep(400);
@@ -271,7 +289,7 @@ public class ChromeDriverUtils {
 				week.put(2, dateAndPrice.get(closestDate.format(acformatter)));
 				week.put(0, year + "W" + weekOfYearString);
 
-				COLUMN_NAME.entrySet().stream().forEach(entry -> {
+				SHAREHOLDER_STRUCTURE_COLUMN_NAME.entrySet().stream().forEach(entry -> {
 					if (!week.containsKey(entry.getKey())) {
 						week.put(entry.getKey(), "-");
 					}
@@ -280,7 +298,10 @@ public class ChromeDriverUtils {
 				weekInfo.add(week);
 				Thread.sleep(500);
 			}
-		} finally {
+		} catch(Exception e) {
+			log.error(e.getMessage(),e);
+		}finally {
+		
 			driver.quit();
 		}
 
@@ -288,31 +309,125 @@ public class ChromeDriverUtils {
 	}
 
 	
-	public static List<Map<Integer, String>> graspStockPrice(String chromeDriverPath, String stockPriceUrl){
-		
+	/**
+	 * 抓上市上櫃的當日收盤、開盤、最高、最低價格
+	 * @param chromeDriverPath
+	 * @param stockTWSEPriceUrl
+	 * @param stockTPEXPriceUrl
+	 * @return
+	 * @throws RestClientException
+	 * @throws URISyntaxException
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static List<Map<String, String>> graspStockPrice(String chromeDriverPath, String stockTWSEPriceUrl,
+			String stockTPEXPriceUrl, List<String> allDataBaseStockCode) throws RestClientException, URISyntaxException {
+		List<Map<String, String>> stockCodePriceWithEveryWeekInfo = Lists.newArrayList();
+		Date oridate = new Date();
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(oridate);
+		for(int minusday = 0 ; minusday < 1; minusday++) {
+//			calendar.add(Calendar.DAY_OF_MONTH, -1);
+			Date date = calendar.getTime();
+			// 将java.util.Date转换为java.time.LocalDate
+			LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+			String ACDateString = new SimpleDateFormat("yyyyMMdd").format(date);
+			for(String type : TWSE_TYPE_LIST) {
+				
+				MultiValueMap<String, Object> multipartMap = new LinkedMultiValueMap<>();
+				multipartMap.add("response", "json");
+				multipartMap.add("date", ACDateString);
+				multipartMap.add("type", type);
+				HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(multipartMap);
+				
+				RestTemplate teseRestTeplate = new RestTemplate();
+				ResponseEntity<Map> responseEntity = teseRestTeplate.exchange(new URI(stockTWSEPriceUrl), HttpMethod.POST, request, Map.class);
+				Map<String, Object> result = responseEntity.getBody();
+				if (result.get("data1")!=null) {
+					List<List<String>> thisDateStockCodePriceInfo = (List<List<String>>) result.get("data1");
+					List<Map<String, String>> TWSEList = thisDateStockCodePriceInfo.stream().map(list -> {
+						Map<String, String> stockPriceInfo = Maps.newHashMap();
+						stockPriceInfo.put("stock_code", list.get(0));
+						stockPriceInfo.put("trading_day", ACDateString);
+						stockPriceInfo.put("opening_price", list.get(5));
+						stockPriceInfo.put("closing_price", list.get(8));
+						stockPriceInfo.put("high_price", list.get(6));
+						stockPriceInfo.put("low_price", list.get(7));
+						return stockPriceInfo;
+					}).toList();
+					stockCodePriceWithEveryWeekInfo.addAll(TWSEList);
+				}
+			}
+			
+			
+			
+			int yearAD = localDate.getYear();
+			int month = localDate.getMonthValue();
+			int day = localDate.getDayOfMonth();
+			
+			// 西元年份转换为民国年份（民国年份 = 西元年份 - 1911）
+			int yearROC = yearAD - 1911;
+			
+			// 如果月份大于 9，则不补零，否则补零
+			String formattedMonth = month > 9 ? String.valueOf(month) : String.format("%02d", month);
+			String formattedDay = day > 9 ? String.valueOf(day) : String.format("%02d", day);
+			String currentstockTPEXPriceUrl = stockTPEXPriceUrl.replace("{dateString}",
+					String.join("/", String.valueOf(yearROC), formattedMonth, formattedDay));
+			RestTemplate TPEXRestTeplate = new RestTemplate();
+			ResponseEntity<Map> TPEXResponseEntity = TPEXRestTeplate
+					.exchange(new URI(currentstockTPEXPriceUrl), HttpMethod.POST, null, Map.class);
+			Map<String, Object> TPEXresult = TPEXResponseEntity.getBody();
+			if (!((List) TPEXresult.get("aaData")).isEmpty()) {
+				List<List<String>> thisDateStockCodePriceInfo = (List<List<String>>) TPEXresult.get("aaData");
+				List<Map<String, String>> TPEXList = thisDateStockCodePriceInfo.stream().filter(list -> allDataBaseStockCode.contains(list.get(0))).map(list -> {
+					Map<String, String> stockPriceInfo = Maps.newHashMap();
+					stockPriceInfo.put("stock_code", list.get(0));
+					stockPriceInfo.put("trading_day", ACDateString);
+					stockPriceInfo.put("opening_price", list.get(4));
+					stockPriceInfo.put("closing_price", list.get(2));
+					stockPriceInfo.put("high_price", list.get(5));
+					stockPriceInfo.put("low_price", list.get(6));
+					return stockPriceInfo;
+				}).toList();
+				stockCodePriceWithEveryWeekInfo.addAll(TPEXList);
+			}
+			
+		}
+		return stockCodePriceWithEveryWeekInfo;
 	}
 	
 	private static void initializeColumnNames() {
-		COLUMN_NAME.put(0, "周別");
-		COLUMN_NAME.put(1, "統計日期");
-		COLUMN_NAME.put(2, "收盤");
-		COLUMN_NAME.put(3, "漲跌(元)");
-		COLUMN_NAME.put(4, "漲跌(%)");
-		COLUMN_NAME.put(5, "集保庫存(萬張)");
-		COLUMN_NAME.put(6, "<1張");
-		COLUMN_NAME.put(7, "≧1張≦5張");
-		COLUMN_NAME.put(8, ">5張≦10張");
-		COLUMN_NAME.put(9, ">10張≦15張");
-		COLUMN_NAME.put(10, ">15張≦20張");
-		COLUMN_NAME.put(11, ">20張≦30張");
-		COLUMN_NAME.put(12, ">30張≦40張");
-		COLUMN_NAME.put(13, ">40張≦50張");
-		COLUMN_NAME.put(14, ">50張≦100張");
-		COLUMN_NAME.put(15, ">100張≦200張");
-		COLUMN_NAME.put(16, ">200張≦400張");
-		COLUMN_NAME.put(17, ">400張≦600張");
-		COLUMN_NAME.put(18, ">600張≦800張");
-		COLUMN_NAME.put(19, ">800張≦1千張");
-		COLUMN_NAME.put(20, ">1千張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(0, "周別");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(1, "統計日期");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(2, "收盤");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(3, "漲跌(元)");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(4, "漲跌(%)");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(5, "集保庫存(萬張)");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(6, "<1張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(7, "≧1張≦5張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(8, ">5張≦10張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(9, ">10張≦15張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(10, ">15張≦20張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(11, ">20張≦30張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(12, ">30張≦40張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(13, ">40張≦50張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(14, ">50張≦100張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(15, ">100張≦200張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(16, ">200張≦400張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(17, ">400張≦600張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(18, ">600張≦800張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(19, ">800張≦1千張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(20, ">1千張");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(21, "總計");
+		
+		
+		STOCK_DAY_PRICE_COLUMN_NAME.put(0, "stock_code");
+		STOCK_DAY_PRICE_COLUMN_NAME.put(1, "trading_day");
+		STOCK_DAY_PRICE_COLUMN_NAME.put(2, "opening_price");
+		STOCK_DAY_PRICE_COLUMN_NAME.put(3, "closing_price");
+		STOCK_DAY_PRICE_COLUMN_NAME.put(4, "high_price");
+		STOCK_DAY_PRICE_COLUMN_NAME.put(5, "low_price");
+		
+
+		
 	}
 }
