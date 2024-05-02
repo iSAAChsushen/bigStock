@@ -159,6 +159,19 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.12.0</version>
+				<executions>
+					<execution>
+						<id>default-testCompile</id>
+						<phase>test-compile</phase>
+						<goals>
+							<goal>testCompile</goal>
+						</goals>
+						<configuration>
+							<skip>true</skip>
+						</configuration>
+					</execution>
+				</executions>
 				<configuration>
 					<annotationProcessorPaths>
 						<path>
@@ -170,5 +183,5 @@
 			</plugin>
 		</plugins>
 	</build>
-	
+
 </project>
