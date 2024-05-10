@@ -1,0 +1,4 @@
+apiVersion: v2
+appVersion: bigstock-schedule.2024.05.08.1
+name: bigstock-schedule
+version: 1.0.0

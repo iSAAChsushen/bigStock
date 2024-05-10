@@ -1,0 +1,206 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: {{ .Values.app_name }}
+  name: {{ .Values.app_name }}-v{{ .Values.app_major_version }}
+spec:
+{{ $dcname := printf "%s-v%.0f" .Values.app_name .Values.app_major_version }}
+{{ $appSysId := trimSuffix "-" (regexFind ".*-" .Values.platform_project_name) }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.app_name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app_name }}
+    spec:
+   #親和性暫不使用
+   #   affinity:
+   #     nodeAffinity:
+   #       requiredDuringSchedulingIgnoredDuringExecution:
+   #         nodeSelectorTerms:
+   #           - matchExpressions:
+   #               - key: env
+   #                 operator: In
+   #                 values:
+   #                   - dev
+   #                   - sit
+   #                   - uat
+   #                   - prod
+   #                   - dr
+{{- if  .Values.service_account_name  }}
+      serviceAccountName: {{ .Values.service_account_name }}
+{{- end }}
+      terminationGracePeriodSeconds: 150
+      containers:
+        - name: {{ .Values.app_name }}   
+          {{ if and (contains "dev" .Values.platform_env_name) (eq .Values.image_repo "Harbor") }}
+          image: core.harbor.domain:31200/{{ .Values.image_location }}
+          {{ end }}    
+          {{ if and (contains "sit" .Values.platform_env_name) (eq .Values.image_repo "Harbor") }}
+          image: container-register-t.testesunbank.com.tw/{{ .Values.image_location }}
+          {{ end }}
+          {{ if and (contains "uat" .Values.platform_env_name) (eq .Values.image_repo "Harbor") }}
+          image: container-register-t.testesunbank.com.tw/{{ .Values.image_location }}
+          {{ end }}
+          {{ if and (contains "prod1" .Values.platform_env_name) (eq .Values.image_repo "Harbor") }}
+          image: container-register-p.esunbank.com.tw/{{ .Values.image_location }}
+          {{ end }}
+          {{ if and (contains "prod2" .Values.platform_env_name) (eq .Values.image_repo "Harbor") }}
+          image: container-register-p.esunbank.com.tw/{{ .Values.image_location }}
+          {{ end }}
+          {{ if and (contains "dr1" .Values.platform_env_name) (eq .Values.image_repo "Harbor") }}
+          image: container-register-r.esunbank.com.tw/{{ .Values.image_location }}
+          {{ end }}    
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: Asia/Taipei
+            - name: JAVA_APP_JAR
+              value: /home/bigstock/{{ .Values.jar_file_name }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+
+            {{- if contains "ocp" .Values.container_platform }}
+            - name: LOG_LOCATION
+              value: "$(POD_NAME)"
+            {{- end }}
+            {{- if contains "anthos" .Values.container_platform }}
+            - name: LOG_LOCATION
+              value: "$(NODE_NAME)/$(POD_NAME)"
+            {{- end }}
+            - name: JAR_NAME
+              value: {{ .Values.jar_file_name }}
+            - name: JAVA_COMMAND_STR
+              value: {{ .Values.java_command_str }}
+           # - name: SPRING_CONFIG_LOCATION
+           #   value: /etc/spring-config/
+           # - name: AB_JOLOKIA_OFF
+           #   value: "true"
+           # - name: GC_MAX_METASPACE_SIZE
+           #   value: "512"
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.apm_configuration_name }}
+            - configMapRef:
+                name: elastic-apm-configuration-{{ .Values.app_name }}
+          ports:
+            - containerPort: {{ .Values.container_port }}
+              name: http
+              protocol: TCP
+         # volumeMounts:
+            ## [殷富修改] spring-config 主要讀取 resource 資料夾
+            # - name: config
+            #   mountPath: /etc/spring-config
+           # - name: truststore  
+           #   mountPath: /etc/truststore
+           # - name: logging
+           #   mountPath: /deployments/log
+           # {{ if .Values.nfs_need }}   
+           # - name: external-storage
+           #   mountPath: /deployments/external-storage
+           # {{ end }}
+           # {{ if .Values.sfg_need }}      
+           # - name: sfgconfig
+           #   mountPath: /tmp/jboss/.ssh
+           # - name: sfgsecret
+           #   mountPath: /tmp/jboss/.ssh/ppk
+           # {{ end }}        
+          resources:
+            requests:
+              cpu: 0.1
+              memory: {{.Values.memory_limit}}
+            limits:
+            {{- if (lookup "apps/v1" "Deployment" .Values.platform_project_name $dcname) }}
+            {{- $containerInfo := (first (lookup "apps/v1" "Deployment" .Values.platform_project_name $dcname).spec.template.spec.containers) }} 
+              cpu: {{ $containerInfo.resources.limits.cpu | int }}
+              memory: {{ $containerInfo.resources.limits.memory }}
+            {{- else }}
+              #cpu: {{ .Values.cpu_limit }}
+              #memory: {{ .Values.memory_limit }}Mi
+              cpu: 1
+              memory: {{.Values.memory_limit}}
+            {{- end }} 
+        #  readinessProbe:      #就緒性探測    用於檢查容器是否已經就緒，能夠處理流量。
+        #    httpGet:
+        #      path: {{ .Values.readiness_probe_path }}
+        #      port: {{ .Values.actuator_port }}
+        #      scheme: HTTPS
+        #    initialDelaySeconds: 100
+        #    timeoutSeconds: 1
+        #    periodSeconds: {{ .Values.readinessprobe_periodseconds }}
+        #    successThreshold: 1
+        #    failureThreshold: {{ .Values.readinessprobe_failurethreshold }}
+        #  lifecycle:
+        #    postStart:
+        #      exec:
+        #        command:
+        #        - /bin/sh
+        #        - '-c'
+        #        - >-
+        #          while true; do curl -k -s -i -m 5
+        #          {{ .Values.lifecycle_poststart_exec_url }} | grep
+        #          '200'; if [ "$?" -eq "0" ]; then break; else sleep 1;
+        #          fi; done 
+        #          {{- if .Values.sfg_need }}      
+        #          ;
+        #          mkdir /home/jboss/.ssh;
+        #          mkdir /home/jboss/.ssh/ppk; 
+        #          cp /tmp/jboss/.ssh/config /home/jboss/.ssh/config;
+        #          cp /tmp/jboss/.ssh/known_host /home/jboss/.ssh/known_hosts;
+        #          cp /tmp/jboss/.ssh/ppk/private.ppk /home/jboss/.ssh/ppk/private.ppk;
+        #          chown :jboss /home/jboss/.ssh/config;
+        #          chown :jboss /home/jboss/.ssh/known_host;
+        #          chown :jboss /home/jboss/.ssh/ppk/private.ppk;
+        #          chmod 600 /home/jboss/.ssh/config;
+        #          chmod 600 /home/jboss/.ssh/known_hosts;
+        #          chmod 700 /home/jboss/.ssh/ppk/private.ppk
+        #          {{- end }}
+                  
+        #    preStop:
+        #      exec:
+        #        command:
+        #        - /bin/sh
+        #        - '-c'
+        #        - |
+        #          /bin/bash << 'EOF'
+        #            POD_LOG_PATH=/deployments/log/$LOG_LOCATION
+        #            for i in {1..3}
+        #            do
+        #              jstack 1 >> $POD_LOG_PATH/jstack-$i.log && echo "preStop has been successful created jstack-$i.log" >> $POD_LOG_PATH/jstack.log || echo "failed to write to the log jstack-$i.log" >> $POD_LOG_PATH/jstack.log
+        #              sleep 10
+        #            done
+        #            sleep 70
+        #            curl -k -X POST https://localhost:18333/admin/actuator/shutdown
+        #            sleep 20
+        #          EOF
+        #  livenessProbe:      #存活性探測     用於檢查容器是否仍然運行。如果容器內的應用程序進入了無法恢復的狀態，Liveness Probe 將會失敗，Kubernetes 將會重新啟動該容器
+        #    httpGet:
+        #      path: {{ .Values.liveness_probe_path }}
+        #      port: {{ .Values.actuator_port }}
+        #      scheme: HTTPS
+        #    initialDelaySeconds: 600
+        #    timeoutSeconds: 1
+        #    periodSeconds:  {{ .Values.livenessprobe_periodseconds }}
+        #    successThreshold: 1
+        #    failureThreshold: {{ .Values.livenessprobe_failurethreshold }}
+       # imagePullSecrets:
+     #   {{ if (eq .Values.image_repo "Quay") }}
+     #   - name: {{ $appSysId }}-rba-{{ $appSysId }}-write-pull-secret
+     #   {{ end }}
+     #   {{ if (eq .Values.image_repo "Harbor") }}
+     #   - name: cicduser-harbor-secret
+     #   {{ end }}

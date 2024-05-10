@@ -1,0 +1,14 @@
+container_port: 18081
+app_major_version: 1
+app_name: bigstock-schedule
+image_location: core.harbor.domain:31200/bigstock-biz/biz:1.0.0-snapshot
+jar_file_name: bigstock-schedule.jar
+java_command_str: -Xlog:gc+heap=trace:file=/home/bigstock/logs/Xlog.log:time,uptimemillis,tid  -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -Dcatalina.home=/home/bigstock -Xms1868M -Xmx1868M -Xss1M  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=512m  -XX:MaxGCPauseMillis=10 -XX:InitiatingHeapOccupancyPercent=60 -XX:+UnlockExperimentalVMOptions -XX:MaxTenuringThreshold=10 -XX:G1NewSizePercent=3
+platform_project_name: bigstock-schedule
+service_port: 18081
+image_repo: Harbor
+cpu_limit: 4
+memory_limit: 2048M
+nfs_need: false
+sfg_need: false
+

@@ -1,0 +1,4 @@
+apiVersion: v2
+appVersion: bigstock-biz.2024.05.08.1
+name: bigstock-gateway
+version: 1.0.0

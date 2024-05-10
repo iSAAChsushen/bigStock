@@ -1,0 +1,15 @@
+container_port: 10093
+app_major_version: 1
+app_name: bigstock-auth
+image_location: bigstock-auth/auth:1.0.0-snapshot
+jar_file_name: bigstock-auth.jar
+java_command_str: -Xlog:gc+heap=trace:file=/usr/local/tomcat/logs/Xlog.log:time,uptimemillis,tid  -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -Dcatalina.home=/usr/local/tomcat/ -Xms1024M -Xmx1024M -Xss256K  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=512m  -XX:MaxGCPauseMillis=10 -XX:InitiatingHeapOccupancyPercent=60 -XX:+UnlockExperimentalVMOptions -XX:MaxTenuringThreshold=10 -XX:G1NewSizePercent=3
+platform_project_name: bigstock-auth
+service_port: 10093
+image_repo: Harbor
+cpu_limit: 2
+memory_limit: 1024M
+nfs_need: false
+sfg_need: false
+platform_env_name: dev
+
