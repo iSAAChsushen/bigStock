@@ -4,8 +4,8 @@ metadata:
   labels:
     app: {{ .Values.app_name }}
   name: {{ .Values.app_name }}-v{{ .Values.app_major_version }}
+  namespace: {{ .Values.namespace }}
 spec:
-{{ $dcname := printf "%s-v%.0f" .Values.app_name .Values.app_major_version }}
 {{ $appSysId := trimSuffix "-" (regexFind ".*-" .Values.platform_project_name) }}
   strategy:
     type: RollingUpdate
@@ -58,7 +58,7 @@ spec:
           {{ if and (contains "dr1" .Values.platform_env_name) (eq .Values.image_repo "Harbor") }}
           image: container-register-r.esunbank.com.tw/{{ .Values.image_location }}
           {{ end }}    
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           env:
             - name: TZ
               value: Asia/Taipei
@@ -85,18 +85,39 @@ spec:
             - name: JAR_NAME
               value: {{ .Values.jar_file_name }}
             - name: JAVA_COMMAND_STR
-              value: {{ .Values.java_command_str }}
+              value: {{ .Values.java_command_str }} 
+            - name: SPRING_REDIS_HOST
+              value: {{ .Values.redis_host | quote }}
+            - name: SPRING_REDIS_PORT
+              value: {{ .Values.redis_port | quote }}
+            - name: SPRING_DATASOURCE_URL
+              value: {{ .Values.datasource_url | quote }}
+            - name: SPRING_DATASOURCE_USERNAME
+              value: {{ .Values.datasource_username | quote }}
+            - name: SPRING_DATASOURCE_PASSWORD
+              value: {{ .Values.datasource_password | quote }}
+            - name: SPRING_RABBITMQ_HOST
+              value: {{ .Values.rabbitmq.host | quote }}
+            - name: SPRING_RABBITMQ_PORT
+              value: {{ .Values.rabbitmq.port | quote }}
+            - name: SPRING_RABBITMQ_USERNAME
+              value: {{ .Values.rabbitmq.username | quote }}
+            - name: SPRING_RABBITMQ_PASSWORD
+              value: {{ .Values.rabbitmq.password | quote }}
+            - name: SPRING_RABBITMQ_VIRTUAL_HOST
+              value: {{ .Values.rabbitmq.virtual_host | quote }}
+            - name: SPRING_RABBITMQ_POOL_CHANNEL_CACHE_SIZE
+              value: {{ .Values.rabbitmq.pool.channelCacheSize | quote }}
+            - name: SPRING_CONSUL_HOST
+              value: {{ .Values.consul_host | quote }}
+            - name: SPRING_CONSUL_PORT
+              value: {{ .Values.consul_port | quote }}
            # - name: SPRING_CONFIG_LOCATION
            #   value: /etc/spring-config/
            # - name: AB_JOLOKIA_OFF
            #   value: "true"
            # - name: GC_MAX_METASPACE_SIZE
            #   value: "512"
-          envFrom:
-            - configMapRef:
-                name: {{ .Values.apm_configuration_name }}
-            - configMapRef:
-                name: elastic-apm-configuration-{{ .Values.app_name }}
           ports:
             - containerPort: {{ .Values.container_port }}
               name: http
@@ -124,16 +145,10 @@ spec:
               cpu: 0.1
               memory: {{.Values.memory_limit}}
             limits:
-            {{- if (lookup "apps/v1" "Deployment" .Values.platform_project_name $dcname) }}
-            {{- $containerInfo := (first (lookup "apps/v1" "Deployment" .Values.platform_project_name $dcname).spec.template.spec.containers) }} 
-              cpu: {{ $containerInfo.resources.limits.cpu | int }}
-              memory: {{ $containerInfo.resources.limits.memory }}
-            {{- else }}
               #cpu: {{ .Values.cpu_limit }}
               #memory: {{ .Values.memory_limit }}Mi
               cpu: 1
               memory: {{.Values.memory_limit}}
-            {{- end }} 
         #  readinessProbe:      #就緒性探測    用於檢查容器是否已經就緒，能夠處理流量。
         #    httpGet:
         #      path: {{ .Values.readiness_probe_path }}

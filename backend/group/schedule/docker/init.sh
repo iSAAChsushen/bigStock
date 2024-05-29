@@ -1,6 +1,6 @@
 #!/bin/bash
 #${JAR_NAME} ${JAVA_COMMAND_STR} 為deployment傳進來的環境變數
-java -server ${JAVA_COMMAND_STR} -jar  ${JAR_NAME}
+java -server ${JAVA_COMMAND_STR} -jar  /opt/bigstock/${JAR_NAME}
 while sleep 60; do
   ps aux |grep ${JAR_NAME} |grep -q -v grep
   PROCESS_1_STATUS=$?

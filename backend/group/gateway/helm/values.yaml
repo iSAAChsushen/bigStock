@@ -1,9 +1,9 @@
 container_port: 11081
 app_major_version: 1
 app_name: bigstock-gateway
-image_location: core.harbor.domain:31200/bigstock-biz/biz:1.0.0-snapshot
+image_location: bigstock-gateway/gateway:1.1.0-snapshot
 jar_file_name: bigstock-gateway.jar
-java_command_str: -Xlog:gc+heap=trace:file=/home/bigstock/logs/Xlog.log:time,uptimemillis,tid  -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -Dcatalina.home=/home/bigstock -Xms1868M -Xmx1868M -Xss1M  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=512m  -XX:MaxGCPauseMillis=10 -XX:InitiatingHeapOccupancyPercent=60 -XX:+UnlockExperimentalVMOptions -XX:MaxTenuringThreshold=10 -XX:G1NewSizePercent=3
+java_command_str: -Xlog:gc+heap=trace:file=/opt/bigstock/logs/Xlog.log:time,uptimemillis,tid  -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -Dcatalina.home=/opt/bigstock -Xms1868M -Xmx1868M -Xss1M  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=512m  -XX:MaxGCPauseMillis=10 -XX:InitiatingHeapOccupancyPercent=60 -XX:+UnlockExperimentalVMOptions -XX:MaxTenuringThreshold=10 -XX:G1NewSizePercent=3
 platform_project_name: bigstock-gateway
 service_port: 11081
 image_repo: Harbor
@@ -11,4 +11,21 @@ cpu_limit: 4
 memory_limit: 2048M
 nfs_need: false
 sfg_need: false
-
+container_platform: rke
+namespace: default
+platform_env_name: dev
+redis_port: 6379
+redis_host: redis-service
+datasource_url: jdbc:postgresql://bstock-postgresql:5432/postgres??currentSchema=bstock
+datasource_username: postgres
+datasource_password: postgres
+rabbitmq:
+  host: rabbitmq-svc
+  port: 5672
+  username: admin
+  password: rabbitmq
+  virtual_host: /
+  pool:
+    channelCacheSize: 5
+consul_host: consul-svc
+consul_port: 8500      

@@ -152,7 +152,9 @@
 		<dependency>
 			<groupId>com.rabbitmq</groupId>
 			<artifactId>amqp-client</artifactId>
+
 		</dependency>
+
 	</dependencies>
 	<build>
 		<plugins>
@@ -183,5 +185,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>

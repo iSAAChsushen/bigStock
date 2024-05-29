@@ -15,9 +15,26 @@ RUN echo "bigstock ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
 # Workspace path
 WORKDIR /home/bigstock
+# 创建目录并设置权限
+RUN mkdir -p /opt/bigstock/logs && \
+    chown -R bigstock:bigstock /opt/bigstock
+RUN apt-get update && \
+     apt-get install -y procps && \
+     apt-get clean
+
+# Workspace path
+WORKDIR /home/bigstock
 
 # 将bigstockmodule复制到bigstock文件夹下
-COPY ./bigstock-gateway.jar /home/bigstock/
+COPY ./bigstock-gateway.jar /opt/bigstock/
 COPY ./init.sh /opt/bigstock/
+
+# 確保 init.sh 有執行權限
+RUN chmod +x /opt/bigstock/init.sh
+
+# 切换到bigstock用户
+USER bigstock
 # 执行init.sh脚本
 CMD ["bash", "/opt/bigstock/init.sh"]
+# 讓容器保持運行狀態
+#CMD ["sleep", "infinity"]

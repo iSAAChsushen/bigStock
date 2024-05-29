@@ -5,13 +5,13 @@ server:
     context-path: /schedule
 spring:
   application:
-    name: big-stcok-backend-schedule
+    name: bigstock-schedule
   main:
     allow-bean-definition-overriding: true
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=bstock
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -22,14 +22,14 @@ spring:
       hibernate:
         show-sql: true
   redis:
-    host: 127.0.0.1
+    host: ${SPRING_REDIS_HOST}
+    port: ${SPRING_REDIS_PORT}
     lettuce:
       pool:
         max-active: 200
         max-idle: 500
         min-idle: 10
         max-wait: 100000
-    port: 6379 
 logging:
   config: classpath:logback.xml
 

@@ -6,13 +6,15 @@ USER root
 RUN mkdir /opt/bigstock
 # 添加一个名为bigstock的用户
 RUN useradd -m -s /bin/bash bigstock
-
+# 创建目录并设置权限
+RUN mkdir -p /opt/bigstock/logs && \
+    chown -R bigstock:bigstock /opt/bigstock
 # 授予bigstock用户sudo权限
 RUN echo "bigstock ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-#RUN apt-get update && \
-#    apt-get install -y maven && \
-#    apt-get clean
+RUN apt-get update && \
+     apt-get install -y procps && \
+     apt-get clean
 
 # Workspace path
 WORKDIR /home/bigstock
@@ -20,5 +22,13 @@ WORKDIR /home/bigstock
 # 将bigstockmodule复制到bigstock文件夹下
 COPY ./bigstock-auth.jar /opt/bigstock/
 COPY ./init.sh /opt/bigstock/
+
+# 確保 init.sh 有執行權限
+RUN chmod +x /opt/bigstock/init.sh
+
+# 切换到bigstock用户
+USER bigstock
 # 执行init.sh脚本
 CMD ["bash", "/opt/bigstock/init.sh"]
+# 讓容器保持運行狀態
+#CMD ["sleep", "infinity"]

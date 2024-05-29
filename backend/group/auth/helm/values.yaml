@@ -1,9 +1,9 @@
 container_port: 10093
 app_major_version: 1
 app_name: bigstock-auth
-image_location: bigstock-auth/auth:1.0.0-snapshot
+image_location: bigstock-auth/auth:1.1.0-snapshot
 jar_file_name: bigstock-auth.jar
-java_command_str: -Xlog:gc+heap=trace:file=/usr/local/tomcat/logs/Xlog.log:time,uptimemillis,tid  -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -Dcatalina.home=/usr/local/tomcat/ -Xms1024M -Xmx1024M -Xss256K  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=512m  -XX:MaxGCPauseMillis=10 -XX:InitiatingHeapOccupancyPercent=60 -XX:+UnlockExperimentalVMOptions -XX:MaxTenuringThreshold=10 -XX:G1NewSizePercent=3
+java_command_str: -Xlog:gc+heap=trace:file=/opt/bigstock/logs/Xlog.log:time,uptimemillis,tid  -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -Dcatalina.home=/opt/bigstock/ -Xms1024M -Xmx1024M -Xss256K  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=512m  -XX:MaxGCPauseMillis=10 -XX:InitiatingHeapOccupancyPercent=60 -XX:+UnlockExperimentalVMOptions -XX:MaxTenuringThreshold=10 -XX:G1NewSizePercent=3
 platform_project_name: bigstock-auth
 service_port: 10093
 image_repo: Harbor
@@ -12,4 +12,12 @@ memory_limit: 1024M
 nfs_need: false
 sfg_need: false
 platform_env_name: dev
-
+container_platform: rke
+namespace: default
+redis_port: 6379
+redis_host: redis-service
+datasource_url: jdbc:postgresql://bstock-postgresql:5432/postgres??currentSchema=bstock
+datasource_username: postgres
+datasource_password: postgres
+consul_host: consul-svc
+consul_port: 8500

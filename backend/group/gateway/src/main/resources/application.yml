@@ -1,30 +1,30 @@
 server:
   port: 11081  
   oauth2:
-    url: http://127.0.0.1:10093  
+    url: http://bigstock-gateway:10093  
     secret-key: 4903837210390382930293802938293802932038203920382039203820392038
 spring:
   main: 
     web-application-type: reactive
     allow-bean-definition-overriding: true
   application:
-    name: bigstock-kj-auth-gateway
+    name: bigstock-gateway
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: admin
-    password: rabbitmq
+    host: ${SPRING_RABBITMQ_HOST}
+    port: ${SPRING_RABBITMQ_PORT}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
     virtual-host: /
     pool:
       channelCacheSize: 5    
   redis:
-    host: 127.0.0.1
-    port: 6379
+    host: ${SPRING_REDIS_HOST}
+    port: ${SPRING_REDIS_PORT}
     timeout: 5000
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=bstock
-    username: postgres
-    password: postgres
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -36,8 +36,8 @@ spring:
         show-sql: true
   cloud:
     consul:
-      host: 127.0.0.1
-      port: 8500  
+      host: ${SPRING_CONSUL_HOST}
+      port: ${SPRING_CONSUL_PORT}    
     discovery:
       health-check-path: /actuator/health # 设置健康检查路径为 Actuator 的健康端点路径
       health-check-interval: 15s # 设置健康检查间隔为 15 秒
@@ -45,13 +45,13 @@ spring:
     gateway:
       routes:
       - id: big-stcok-biz-http-api
-        uri: lb://big-stcok-biz
+        uri: lb://bigstock-biz
         predicates:
           - Path=/api/txn/**,/api/asset/**,/api/inventory/**,/api/opt/**,/api/device/**,/api/loc/**,/api/unit/**,/api/suppiler/**,/api/repair/**,/api/role/**,/api/function/**,/api/org/**,/api/account/**,/api/dept/**,/api/opportunity/**,/api/file/**,/api/common/**,/api/location/**,/api/stocktake/**,/api/dashboard/**,/api/require/**,/api/supplier/**,/api/assetDownload/**,/api/assetUpload/**,/api/param/**,/api/downloadASTDTEXP/**,/api/flow/**,/api/change/**,/api/info/repair/**
         filters:
           - StripPrefix=1
       - id: big-stock-auth
-        uri: lb://big-stock-auth-server
+        uri: lb://bigstock-auth
         predicates:
         - Path=/auth/**
 
