@@ -44,7 +44,8 @@ services:
   consul:
     image: consul:1.7.3   
     container_name: big_stock_consul
-    ports:  8500
+    ports:  
+      - "8500:8500"
     networks:
       - big_stock_network             
 networks:
