@@ -85,7 +85,7 @@ services:
     networks:
       - big_stock_network       
     volumes:
-      - ../schedule/chrome-driver/chromedriver-linux64/chromedriver:/home/bigstock/chrome-driver/chromedriver-linux64/chromedriver  
+      - ../../../schedule/chrome-driver/chromedriver-linux64/chromedriver:/home/bigstock/chrome-driver/chromedriver-linux64/chromedriver  
 networks:
   big_stock_network:
     external: true                
