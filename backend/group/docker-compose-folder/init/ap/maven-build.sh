@@ -2,4 +2,4 @@
 
 cd ../../../
 
-mvn clean install -DskipTests=true
+mvn -s ./settings.xml clean install -DskipTests=true
