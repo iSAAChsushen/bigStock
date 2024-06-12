@@ -9,7 +9,9 @@ services:
     volumes:
       - ./bstock_dump.sql:/tmp/bstock_dump.sql
     networks:
-      - big_stock_network         
+      - big_stock_network   
+    environment:
+      POSTGRES_PASSWORD: postgresql 
   redis:
     image: redis:7.2.4
     container_name: redis
