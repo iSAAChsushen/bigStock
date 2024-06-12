@@ -1,4 +1,5 @@
-!bin#bash
+#!/bin/bash
+
 cd ../../../
 
 mvn clean install -DskipTests=true
