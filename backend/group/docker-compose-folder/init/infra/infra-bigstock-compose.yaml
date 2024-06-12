@@ -1,0 +1,52 @@
+version: '3.7'
+services:
+  bstock-postgresql:
+    container_name: bstock-postgresql
+    image: postgres/postgres:15-alpine
+    ports:
+      - "5432:5432"
+    restart: always  
+    volumes:
+      - ./bstock_dump.sql:/tmp/bstock_dump.sql
+    networks:
+      - big_stock_network         
+  redis:
+    image: redis:7.2.4
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis.conf:/etc/redis/redis.conf
+    command: ["redis-server", "/etc/redis/redis.conf"]
+    networks:
+      - big_stock_network       
+  redisinsight:
+    image: redislabs/redisinsight:v2
+    container_name: redisinsight
+    ports:
+      - "5540:5540"
+    depends_on:
+      - redis
+    environment:
+      LOG_LEVEL: "debug"  
+    networks:
+      - big_stock_network            
+  rabbitmq:
+    image: rabbitmq:3.12.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: rabbitmq   
+    networks:
+      - big_stock_network 
+  consul:
+    image: consul:1.7.3   
+    container_name: big_stock_consul
+    ports:  8500
+    networks:
+      - big_stock_network             
+networks:
+  big_stock_network:
+    external: true                  

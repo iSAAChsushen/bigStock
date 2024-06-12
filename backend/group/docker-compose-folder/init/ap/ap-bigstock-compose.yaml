@@ -1,0 +1,91 @@
+version: '3.7'
+services:
+  bigstock-gateway:
+    image: ../gateway/docker/Dockerfile
+    container_name: bigstock-gateway
+    ports:
+      - "11081:11081" 
+    depends_on:
+      - redis    
+      - bstock-postgresql 
+      - bigstock-auth  
+    environment:
+      SPRING_CONSUL_HOST: big_stock_consul
+      SPRING_CONSUL_PORT: 8500  
+      SPRING_DATASOURCE_URL: bstock-postgresql:5432
+      SPRING_DATASOURCE_USERNAME: postgresql
+      SPRING_DATASOURCE_PASSWORD: postgresql   
+      SPRING_REDIS_HOST: redis:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: rabbitmq
+    networks:
+      - big_stock_network      
+  bigstock-auth:
+    image: ../auth/docker/Dockerfile
+    container_name: bigstock-auth
+    ports:
+      - "10093:10093" 
+    depends_on:
+      - redis    
+      - bstock-postgresql 
+    networks:
+      - big_stock_network  
+    environment:
+      SPRING_CONSUL_HOST: big_stock_consul
+      SPRING_CONSUL_PORT: 8500  
+      SPRING_DATASOURCE_URL: bstock-postgresql:5432
+      SPRING_DATASOURCE_USERNAME: postgresql
+      SPRING_DATASOURCE_PASSWORD: postgresql   
+      SPRING_REDIS_HOST: redis:5672 
+  bigstock-biz:
+    image: ../biz/docker/Dockerfile
+    container_name: bigstock-biz
+    ports:
+      - "18080:18080" 
+    depends_on:
+      - redis  
+      - rabbitmq  
+      - bstock-postgresql  
+      - bigstock-gateway
+    environment:
+      SPRING_CONSUL_HOST: big_stock_consul
+      SPRING_CONSUL_PORT: 8500  
+      SPRING_DATASOURCE_URL: bstock-postgresql:5432
+      SPRING_DATASOURCE_USERNAME: postgresql
+      SPRING_DATASOURCE_PASSWORD: postgresql   
+      SPRING_REDIS_HOST: redis:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: rabbitmq  
+    networks:
+      - big_stock_network     
+  bigstock-schedule:
+    image: ../schedule/docker/Dockerfile
+    container_name: bigstock-biz
+    ports:
+      - "18081:18081" 
+    depends_on:
+      - redis    
+      - bstock-postgresql
+    environment:
+      SPRING_CONSUL_HOST: big_stock_consul
+      SPRING_CONSUL_PORT: 8500  
+      SPRING_DATASOURCE_URL: bstock-postgresql:5432
+      SPRING_DATASOURCE_USERNAME: postgresql
+      SPRING_DATASOURCE_PASSWORD: postgresql   
+      SPRING_REDIS_HOST: redis:5672
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_PORT: 5672
+      SPRING_RABBITMQ_USERNAME: admin
+      SPRING_RABBITMQ_PASSWORD: rabbitmq  
+      CHROME_DRIVER_LINUX_PATH: /home/bigstock/chrome-driver/chromedriver-linux64/chromedriver
+    networks:
+      - big_stock_network       
+    volumes:
+      - ../schedule/chrome-driver/chromedriver-linux64/chromedriver:/home/bigstock/chrome-driver/chromedriver-linux64/chromedriver  
+networks:
+  big_stock_network:
+    external: true                

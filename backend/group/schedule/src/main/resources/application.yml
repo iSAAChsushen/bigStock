@@ -47,7 +47,7 @@ schedule:
       path: D:/sts/chromedriver-win64/chromedriver.exe
     linux:
        active: false
-       path: DD	
+       path: ${CHROME_DRIVER_LINUX_PATH}	
   tdccQryStockUrl: https://www.tdcc.com.tw/portal/zh/smWeb/qryStock
   overTheCounterUrl: https://mops.twse.com.tw/mops/web/t51sb01
   stock-price:
