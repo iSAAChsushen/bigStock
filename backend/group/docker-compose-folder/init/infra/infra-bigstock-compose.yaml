@@ -8,6 +8,8 @@ services:
     restart: always  
     volumes:
       - ./bstock_dump.sql:/tmp/bstock_dump.sql
+      - ./bstock_dump.sql:/docker-entrypoint-initdb.d/02_bstock_dump.sql
+      - ./init.sql:/docker-entrypoint-initdb.d/01_init.sql  # 添加初始化腳本
     networks:
       - big_stock_network   
     environment:
