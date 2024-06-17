@@ -17,6 +17,7 @@ services:
   redis:
     image: redis:7.2.4
     container_name: redis
+    restart: always 
     ports:
       - "6379:6379"
     volumes:
@@ -26,6 +27,7 @@ services:
       - big_stock_network       
   redisinsight:
     image: redislabs/redisinsight:v2
+    restart: always 
     container_name: redisinsight
     ports:
       - "5540:5540"
@@ -36,7 +38,9 @@ services:
     networks:
       - big_stock_network            
   rabbitmq:
+    hostname: rabbitmq
     image: rabbitmq:3.12.13-management
+    restart: always 
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -47,6 +51,7 @@ services:
       - big_stock_network 
   consul:
     image: consul:1.7.3   
+    restart: always 
     container_name: big_stock_consul
     ports:  
       - "8500:8500"

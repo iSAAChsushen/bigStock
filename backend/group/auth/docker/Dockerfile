@@ -12,9 +12,6 @@ RUN mkdir -p /opt/bigstock/logs && \
 # 授予bigstock用户sudo权限
 RUN echo "bigstock ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-RUN apt-get update && \
-     apt-get install -y procps && \
-     apt-get clean
 
 # Workspace path
 WORKDIR /home/bigstock

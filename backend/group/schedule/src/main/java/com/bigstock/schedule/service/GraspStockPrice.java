@@ -40,8 +40,11 @@ public class GraspStockPrice {
 	@Value("${schedule.chromeDriverPath.linux.active}")
 	private boolean linuxActive;
 
-	@Value("${schedule.chromeDriverPath.linux.path}")
+	@Value("${schedule.chromeDriverPath.linux.driver-path}")
 	private String linuxChromeDriverPath;
+	
+//	@Value("${schedule.chromeDriverPath.linux.chrome-path}")
+//	private String linuxChromePath;
 
 	@Value("${schedule.stock-price.url.tpex}")
 	private String stockPriceTPEXUrl;
@@ -60,7 +63,7 @@ public class GraspStockPrice {
 		// 先抓DB裡面全部的代號資料
 		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
 		List<StockDayPrice> stockDayPrices = ChromeDriverUtils
-				.graspStockPrice(windowsChromeDriverPath, stockPriceTWSEUrl, stockPriceTPEXUrl, allDataBaseStockCode)
+				.graspStockPrice(stockPriceTWSEUrl, stockPriceTPEXUrl, allDataBaseStockCode)
 				.stream().filter(map -> StringUtils.isNotBlank(map.get("stock_code"))).map(map -> {
 					StockDayPrice stockDayPrice = new StockDayPrice();
 					try {

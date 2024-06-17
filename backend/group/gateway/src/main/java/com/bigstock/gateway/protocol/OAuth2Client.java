@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.bigstock.gateway.domain.vo.TokenInfo;
 import com.bigstock.gateway.domain.vo.UserInloginInfo;
 
-@FeignClient(name = "big-stock-auth-server")
+@FeignClient(name = "bigstock-auth")
 public interface OAuth2Client {
 
     @PostMapping(value ="/auth/refreshToken", consumes = MediaType.APPLICATION_JSON_VALUE)

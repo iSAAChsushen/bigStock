@@ -7,6 +7,7 @@ spring:
   main: 
     web-application-type: reactive
     allow-bean-definition-overriding: true
+    allow-circular-references: true
   application:
     name: bigstock-gateway
   rabbitmq:
@@ -47,7 +48,7 @@ spring:
       - id: big-stcok-biz-http-api
         uri: lb://bigstock-biz
         predicates:
-          - Path=/api/txn/**,/api/asset/**,/api/inventory/**,/api/opt/**,/api/device/**,/api/loc/**,/api/unit/**,/api/suppiler/**,/api/repair/**,/api/role/**,/api/function/**,/api/org/**,/api/account/**,/api/dept/**,/api/opportunity/**,/api/file/**,/api/common/**,/api/location/**,/api/stocktake/**,/api/dashboard/**,/api/require/**,/api/supplier/**,/api/assetDownload/**,/api/assetUpload/**,/api/param/**,/api/downloadASTDTEXP/**,/api/flow/**,/api/change/**,/api/info/repair/**
+          - Path=/api/biz/**
         filters:
           - StripPrefix=1
       - id: big-stock-auth

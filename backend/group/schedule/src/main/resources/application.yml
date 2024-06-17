@@ -8,6 +8,10 @@ spring:
     name: bigstock-schedule
   main:
     allow-bean-definition-overriding: true
+  cloud:
+    consul:
+      host: ${SPRING_CONSUL_HOST}
+      port: ${SPRING_CONSUL_PORT}      
   datasource:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
@@ -43,11 +47,12 @@ schedule:
           update-stock-info: "0 0 8 ? * SAT"
   chromeDriverPath:
     windows: 
-      active: true	
+      active: false	
       path: D:/sts/chromedriver-win64/chromedriver.exe
     linux:
-       active: false
-       path: ${CHROME_DRIVER_LINUX_PATH}	
+       active: true
+       driver-path: ${CHROME_DRIVER_LINUX_PATH}	
+     #  chrome-path: ${CHROME_LINUX_PATH}	
   tdccQryStockUrl: https://www.tdcc.com.tw/portal/zh/smWeb/qryStock
   overTheCounterUrl: https://mops.twse.com.tw/mops/web/t51sb01
   stock-price:

@@ -36,8 +36,11 @@ public class GraspShareholderStructureService {
 	@Value("${schedule.chromeDriverPath.linux.active}")
 	private boolean linuxActive;
 
-	@Value("${schedule.chromeDriverPath.linux.path}")
+	@Value("${schedule.chromeDriverPath.linux.driver-path}")
 	private String linuxChromeDriverPath;
+	
+//	@Value("${schedule.chromeDriverPath.linux.chrome-path}")
+//	private String linuxChromePath;
 
 	@Value("${schedule.tdccQryStockUrl}")
 	private String tdccQryStockUrl;
@@ -51,14 +54,15 @@ public class GraspShareholderStructureService {
 
 	private final StockInfoService stockInfoService;
 
-	@PostConstruct
+//	@PostConstruct
 	// 每周日早上8点触发更新
-//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
+	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
 	public void updateShareholderStructure() {
 		// 先抓DB裡面全部的代號資料
 		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
 		allDataBaseStockCode.stream().forEach(stockCode -> {
 			try {
+				log.info("begining sync stockCode {}",stockCode);
 				List<ShareholderStructure> ssList = shareholderStructureService
 						.getShareholderStructureByStockCodeDesc(stockCode);
 				if (!ssList.isEmpty()) {
@@ -85,6 +89,7 @@ public class GraspShareholderStructureService {
 			} catch (InterruptedException e) {
 				log.error(e.getMessage(), e);
 			}
+			log.info("finsh sync stockCode {}",stockCode);
 		});
 	}
 
@@ -164,7 +169,7 @@ public class GraspShareholderStructureService {
 	}
 
 //	@PostConstruct
-//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
+	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
 	public void updateStockInfo() throws InterruptedException {
 		List<StockInfo> stockInfos = ChromeDriverUtils
 				.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, overTheCounterUrl);

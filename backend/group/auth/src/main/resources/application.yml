@@ -9,9 +9,18 @@ spring:
     allow-bean-definition-overriding: true
   application:
     name: bigstock-auth
-  consul:
-    host: ${SPRING_CONSUL_HOST}
-    port: ${SPRING_CONSUL_PORT}    
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST}
+    port: ${SPRING_RABBITMQ_PORT}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
+    virtual-host: /
+    pool:
+      channelCacheSize: 5   
+  cloud:
+    consul:
+      host: ${SPRING_CONSUL_HOST}
+      port: ${SPRING_CONSUL_PORT}    
   redis:
     host: ${SPRING_REDIS_HOST}
     port: ${SPRING_REDIS_PORT}

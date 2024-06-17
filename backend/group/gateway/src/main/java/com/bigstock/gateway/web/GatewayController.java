@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bigstock.gateway.protocol.OAuth2Client;
 import com.bigstock.sharedComponent.dto.SingleStockPriceBizVo;
 import com.bigstock.sharedComponent.service.RabbitMqService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -33,8 +32,8 @@ public class GatewayController {
 	RabbitMqService rabbitMqService;
 
 
-	@Autowired
-	OAuth2Client oauth2Client;
+//	@Autowired
+//	OAuth2Client oauth2Client;
 
 	@PostMapping("forTest")
 	@PreAuthorize("hasRole('Admin7')")

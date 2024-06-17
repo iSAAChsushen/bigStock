@@ -18,9 +18,6 @@ WORKDIR /home/bigstock
 # 创建目录并设置权限
 RUN mkdir -p /opt/bigstock/logs && \
     chown -R bigstock:bigstock /opt/bigstock
-RUN apt-get update && \
-     apt-get install -y procps && \
-     apt-get clean
 
 # Workspace path
 WORKDIR /home/bigstock

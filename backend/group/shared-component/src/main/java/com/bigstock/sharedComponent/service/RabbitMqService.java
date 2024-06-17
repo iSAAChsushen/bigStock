@@ -9,6 +9,7 @@ import java.util.concurrent.TimeoutException;
 import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Maps;
@@ -27,6 +28,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RabbitMqService {
 
+	@Value("${spring.rabbitmq.host}")
+	String rabbitMqHost;
+	@Value("${spring.rabbitmq.port}")
+	String rabbitMqPort;
+	
+	@Value("${spring.rabbitmq.username}")
+	String rabbitMqUsername;
+	@Value("${spring.rabbitmq.password}")
+	String rabbitMqPassword;
 	private final RabbitTemplate rabbitTemplate;
 
 	private static final Map<String, Object> tmpStoredReceivedData = Maps.newConcurrentMap();
@@ -51,11 +61,11 @@ public class RabbitMqService {
 	public String createConsumer(CountDownLatch latch, String queueName, String exchangeName)
 			throws IOException, TimeoutException {
 		ConnectionFactory factory = new ConnectionFactory();
-		factory.setHost("127.0.0.1"); // 或者你的 RabbitMQ 服务器的主机名
-		factory.setPort(5672); // AMQP 协议的默认端口
+		factory.setHost(rabbitMqHost); // 或者你的 RabbitMQ 服务器的主机名
+		factory.setPort(Integer.valueOf(rabbitMqPort) ); // AMQP 协议的默认端口
 		String UUIDString = UUID.randomUUID().toString();
-		factory.setUsername("admin");
-		factory.setPassword("rabbitmq");
+		factory.setUsername(rabbitMqUsername);
+		factory.setPassword(rabbitMqPassword);
 		Connection connection = null;
 		Channel channel = null;
 

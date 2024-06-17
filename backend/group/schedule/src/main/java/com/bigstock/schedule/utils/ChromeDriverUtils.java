@@ -26,6 +26,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeDriverService;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.Select;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -46,9 +47,9 @@ import lombok.extern.slf4j.Slf4j;
 public class ChromeDriverUtils {
 
 	private static final Map<Integer, String> SHAREHOLDER_STRUCTURE_COLUMN_NAME = new HashMap<>();
-	
+
 	private static final Map<Integer, String> STOCK_DAY_PRICE_COLUMN_NAME = new HashMap<>();
-	
+
 	private static final List<String> TWSE_TYPE_LIST = Arrays.asList("01", "02", "03", "04", "05", "06", "07", "21",
 			"22", "08", "09", "10", "11", "12", "13", "24", "25", "26", "27", "28", "29", "30", "31", "14", "15", "16",
 			"17", "18", "9299", "23", "19", "20");
@@ -57,12 +58,17 @@ public class ChromeDriverUtils {
 		initializeColumnNames();
 	}
 
-	public static List<StockInfo> grepStockInfo(String chromeDriverPath, String overTheCounterUrl)
-			throws InterruptedException {
+	public static List<StockInfo> grepStockInfo(String chromeDriverPath,
+			String overTheCounterUrl) throws InterruptedException {
 		ChromeDriverService service = new ChromeDriverService.Builder()
 				.usingDriverExecutable(new File(chromeDriverPath)).usingAnyFreePort().build();
 		List<StockInfo> stockInfos = Lists.newArrayList();
-		WebDriver driver = new ChromeDriver(service);
+		ChromeOptions options = new ChromeOptions();
+//		options.setBinary(linuxChromePath); // 指定Chrome的路徑
+		options.addArguments("--headless"); // 設定無頭模式
+		options.addArguments("--no-sandbox"); // 取消沙盒模式
+		options.addArguments("--disable-dev-shm-usage"); // 解決共享記憶體問題
+		WebDriver driver = new ChromeDriver(service, options);
 		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
 		try {
 			driver.get(overTheCounterUrl);
@@ -155,15 +161,19 @@ public class ChromeDriverUtils {
 		return stockInfos;
 	}
 
-	public static List<Map<Integer, String>> graspShareholderStructure(String chromeDriverPath, String tdccQryStockUrl,
-			String stockCode, String latestCountDateStr) throws InterruptedException {
+	public static List<Map<Integer, String>> graspShareholderStructure(String chromeDriverPath,
+			String tdccQryStockUrl, String stockCode, String latestCountDateStr) throws InterruptedException {
 
 		List<Map<Integer, String>> weekInfo = new ArrayList<>();
 
 		ChromeDriverService service = new ChromeDriverService.Builder()
 				.usingDriverExecutable(new File(chromeDriverPath)).usingAnyFreePort().build();
-
-		WebDriver driver = new ChromeDriver(service);
+		ChromeOptions options = new ChromeOptions();
+//		options.setBinary(linuxChromePath); // 指定Chrome的路徑
+		options.addArguments("--headless"); // 設定無頭模式
+		options.addArguments("--no-sandbox"); // 取消沙盒模式
+		options.addArguments("--disable-dev-shm-usage"); // 解決共享記憶體問題
+		WebDriver driver = new ChromeDriver(service, options);
 		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 		try {
 			driver.get(tdccQryStockUrl);
@@ -260,17 +270,16 @@ public class ChromeDriverUtils {
 				long closestDuration = Long.MAX_VALUE;
 
 				for (String dateString : dateAndPrice.keySet()) {
-				       // 指定日期字符串格式
-			        DateTimeFormatter dateStringformatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+					// 指定日期字符串格式
+					DateTimeFormatter dateStringformatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
+					// 将民国日期转换为西元日期
+					String[] parts = dateString.split("/");
+					int year = Integer.parseInt(parts[0]) + 1911; // 民国转换为西元
+					String standardDateString = year + "/" + parts[1] + "/" + parts[2];
 
-			        // 将民国日期转换为西元日期
-			        String[] parts = dateString.split("/");
-			        int year = Integer.parseInt(parts[0]) + 1911; // 民国转换为西元
-			        String standardDateString = year + "/" + parts[1] + "/" + parts[2];
-
-			        // 解析标准日期字符串为 LocalDate 对象
-			        LocalDate date = LocalDate.parse(standardDateString, dateStringformatter);
+					// 解析标准日期字符串为 LocalDate 对象
+					LocalDate date = LocalDate.parse(standardDateString, dateStringformatter);
 					long duration = Math.abs(selectDate.until(date).getDays());
 
 					if (duration < closestDuration) {
@@ -298,19 +307,19 @@ public class ChromeDriverUtils {
 				weekInfo.add(week);
 				Thread.sleep(500);
 			}
-		} catch(Exception e) {
-			log.error(e.getMessage(),e);
-		}finally {
-		
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		} finally {
+
 			driver.quit();
 		}
 
 		return weekInfo;
 	}
 
-	
 	/**
 	 * 抓上市上櫃的當日收盤、開盤、最高、最低價格
+	 * 
 	 * @param chromeDriverPath
 	 * @param stockTWSEPriceUrl
 	 * @param stockTPEXPriceUrl
@@ -319,30 +328,31 @@ public class ChromeDriverUtils {
 	 * @throws URISyntaxException
 	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static List<Map<String, String>> graspStockPrice(String chromeDriverPath, String stockTWSEPriceUrl,
-			String stockTPEXPriceUrl, List<String> allDataBaseStockCode) throws RestClientException, URISyntaxException {
+	public static List<Map<String, String>> graspStockPrice(String stockTWSEPriceUrl, String stockTPEXPriceUrl, List<String> allDataBaseStockCode)
+			throws RestClientException, URISyntaxException {
 		List<Map<String, String>> stockCodePriceWithEveryWeekInfo = Lists.newArrayList();
 		Date oridate = new Date();
 		Calendar calendar = Calendar.getInstance();
 		calendar.setTime(oridate);
-		for(int minusday = 0 ; minusday < 1; minusday++) {
+		for (int minusday = 0; minusday < 1; minusday++) {
 //			calendar.add(Calendar.DAY_OF_MONTH, -1);
 			Date date = calendar.getTime();
 			// 将java.util.Date转换为java.time.LocalDate
 			LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
 			String ACDateString = new SimpleDateFormat("yyyyMMdd").format(date);
-			for(String type : TWSE_TYPE_LIST) {
-				
+			for (String type : TWSE_TYPE_LIST) {
+
 				MultiValueMap<String, Object> multipartMap = new LinkedMultiValueMap<>();
 				multipartMap.add("response", "json");
 				multipartMap.add("date", ACDateString);
 				multipartMap.add("type", type);
 				HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(multipartMap);
-				
+
 				RestTemplate teseRestTeplate = new RestTemplate();
-				ResponseEntity<Map> responseEntity = teseRestTeplate.exchange(new URI(stockTWSEPriceUrl), HttpMethod.POST, request, Map.class);
+				ResponseEntity<Map> responseEntity = teseRestTeplate.exchange(new URI(stockTWSEPriceUrl),
+						HttpMethod.POST, request, Map.class);
 				Map<String, Object> result = responseEntity.getBody();
-				if (result.get("data1")!=null) {
+				if (result.get("data1") != null) {
 					List<List<String>> thisDateStockCodePriceInfo = (List<List<String>>) result.get("data1");
 					List<Map<String, String>> TWSEList = thisDateStockCodePriceInfo.stream().map(list -> {
 						Map<String, String> stockPriceInfo = Maps.newHashMap();
@@ -357,44 +367,43 @@ public class ChromeDriverUtils {
 					stockCodePriceWithEveryWeekInfo.addAll(TWSEList);
 				}
 			}
-			
-			
-			
+
 			int yearAD = localDate.getYear();
 			int month = localDate.getMonthValue();
 			int day = localDate.getDayOfMonth();
-			
+
 			// 西元年份转换为民国年份（民国年份 = 西元年份 - 1911）
 			int yearROC = yearAD - 1911;
-			
+
 			// 如果月份大于 9，则不补零，否则补零
 			String formattedMonth = month > 9 ? String.valueOf(month) : String.format("%02d", month);
 			String formattedDay = day > 9 ? String.valueOf(day) : String.format("%02d", day);
 			String currentstockTPEXPriceUrl = stockTPEXPriceUrl.replace("{dateString}",
 					String.join("/", String.valueOf(yearROC), formattedMonth, formattedDay));
 			RestTemplate TPEXRestTeplate = new RestTemplate();
-			ResponseEntity<Map> TPEXResponseEntity = TPEXRestTeplate
-					.exchange(new URI(currentstockTPEXPriceUrl), HttpMethod.POST, null, Map.class);
+			ResponseEntity<Map> TPEXResponseEntity = TPEXRestTeplate.exchange(new URI(currentstockTPEXPriceUrl),
+					HttpMethod.POST, null, Map.class);
 			Map<String, Object> TPEXresult = TPEXResponseEntity.getBody();
 			if (!((List) TPEXresult.get("aaData")).isEmpty()) {
 				List<List<String>> thisDateStockCodePriceInfo = (List<List<String>>) TPEXresult.get("aaData");
-				List<Map<String, String>> TPEXList = thisDateStockCodePriceInfo.stream().filter(list -> allDataBaseStockCode.contains(list.get(0))).map(list -> {
-					Map<String, String> stockPriceInfo = Maps.newHashMap();
-					stockPriceInfo.put("stock_code", list.get(0));
-					stockPriceInfo.put("trading_day", ACDateString);
-					stockPriceInfo.put("opening_price", list.get(4));
-					stockPriceInfo.put("closing_price", list.get(2));
-					stockPriceInfo.put("high_price", list.get(5));
-					stockPriceInfo.put("low_price", list.get(6));
-					return stockPriceInfo;
-				}).toList();
+				List<Map<String, String>> TPEXList = thisDateStockCodePriceInfo.stream()
+						.filter(list -> allDataBaseStockCode.contains(list.get(0))).map(list -> {
+							Map<String, String> stockPriceInfo = Maps.newHashMap();
+							stockPriceInfo.put("stock_code", list.get(0));
+							stockPriceInfo.put("trading_day", ACDateString);
+							stockPriceInfo.put("opening_price", list.get(4));
+							stockPriceInfo.put("closing_price", list.get(2));
+							stockPriceInfo.put("high_price", list.get(5));
+							stockPriceInfo.put("low_price", list.get(6));
+							return stockPriceInfo;
+						}).toList();
 				stockCodePriceWithEveryWeekInfo.addAll(TPEXList);
 			}
-			
+
 		}
 		return stockCodePriceWithEveryWeekInfo;
 	}
-	
+
 	private static void initializeColumnNames() {
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(0, "周別");
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(1, "統計日期");
@@ -418,16 +427,13 @@ public class ChromeDriverUtils {
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(19, ">800張≦1千張");
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(20, ">1千張");
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(21, "總計");
-		
-		
+
 		STOCK_DAY_PRICE_COLUMN_NAME.put(0, "stock_code");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(1, "trading_day");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(2, "opening_price");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(3, "closing_price");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(4, "high_price");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(5, "low_price");
-		
 
-		
 	}
 }
