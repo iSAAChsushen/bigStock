@@ -10,25 +10,25 @@ spring:
   application:
     name: bigstock-auth
   rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST}
-    port: ${SPRING_RABBITMQ_PORT}
-    username: ${SPRING_RABBITMQ_USERNAME}
-    password: ${SPRING_RABBITMQ_PASSWORD}
+    host: 127.0.0.1
+    port: 5672
+    username: admin
+    password: rabbitmq
     virtual-host: /
     pool:
       channelCacheSize: 5   
   cloud:
     consul:
-      host: ${SPRING_CONSUL_HOST}
-      port: ${SPRING_CONSUL_PORT}    
+      host: 127.0.0.1
+      port: 8500
   redis:
-    host: ${SPRING_REDIS_HOST}
-    port: ${SPRING_REDIS_PORT}
+    host: 127.0.0.1
+    port: 6379
     timeout: 5000
   datasource:
-    url: ${SPRING_DATASOURCE_URL}
-    username: ${SPRING_DATASOURCE_USERNAME}
-    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: jdbc:postgresql://127.0.0.1:5432/bstock
+    username: bstockuser
+    password: postgresql
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -41,10 +41,16 @@ spring:
 
 logging:
   config: classpath:logback.xml
+  level:
+    org:
+      springdoc: DEBUG
+      springframework:
+        web: DEBUG 
   
 springdoc:
   api-docs:
     path: /auth/swagger/v3/api-docs   
   swagger-ui:
     path: /auth/swagger/swagger-ui.html  
-    enable: true  
+    enable: true
+    

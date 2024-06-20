@@ -28,6 +28,7 @@ public class BizService {
 	private final StockDayPriceService stockDayPriceService;
 
 	public List<ShareholderStructure> getStockShareholderStructure(String stockCode, int limit) {
+		
 		return shareholderStructureService.getShareholderStructureByStockCodeDesc(stockCode).subList(0, limit);
 	}
 

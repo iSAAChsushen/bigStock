@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cloud.openfeign.support.SpringMvcContract;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.http.server.reactive.ServerHttpResponse;
@@ -20,9 +19,6 @@ import org.springframework.web.server.WebFilterChain;
 import com.bigstock.gateway.domain.vo.TokenInfo;
 import com.bigstock.gateway.protocol.OAuth2Client;
 
-import feign.Feign;
-import feign.jackson.JacksonEncoder;
-import feign.okhttp.OkHttpClient;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.JwtException;
@@ -32,30 +28,30 @@ import reactor.core.publisher.Mono;
 
 @Component
 public class BigStockGatewayCustomWebFilter implements WebFilter {
-	
+
 	@Autowired
 	private RedissonClient redissonClient;
 	@Value("${server.oauth2.secret-key}")
 	private String secretKey;
 //	@Value("${server.oauth2.url}")
 //	private String oauth2Url;
-	
+
 	@Autowired
 	OAuth2Client oauth2Client;
-	
+
 	private static final Logger log = LoggerFactory.getLogger(BigStockGatewayCustomWebFilter.class);
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-		// 在这里实现您的过滤逻辑
-		// 例如，记录每个请求的信息
 		log.info("Request URL: {}", exchange.getRequest().getURI().toString());
 
 		ServerHttpRequest request = exchange.getRequest();
 		ServerHttpResponse response = exchange.getResponse();
 		try {
-			if (request.getPath().value().startsWith("/actuator/") 
-					|| request.getPath().value().startsWith("/auth/")) {
+			if (request.getPath().value().startsWith("/actuator/") || request.getPath().value().startsWith("/auth/")
+					|| request.getPath().value().startsWith("/api/biz/swagger")
+					|| request.getPath().value().startsWith("/gateway/swagger/")
+					|| request.getPath().value().contains("/webjars/")) {
 				return chain.filter(exchange);
 			}
 			String token = request.getHeaders().getFirst("Authorization");
@@ -70,14 +66,14 @@ public class BigStockGatewayCustomWebFilter implements WebFilter {
 			RBucket<Object> accessTokenRB = redissonClient.getBucket("access_token:" + claims.getSubject());
 			// 假設accessTokenRB不存在或client带的token与Redis的token不一样的时候，依样导回登入页
 			if (!request.getPath().value().startsWith("/actuator/")
-					
+
 					&& !request.getPath().value().startsWith("/auth/")) {
 				if ((!accessTokenRB.isExists() || !token.equals(accessTokenRB.get().toString()))
 						&& !refreshToken.isExists()) {
 					return unauthorized(response);
 				}
 			}
-			if(accessTokenRB.isExists()) {
+			if (accessTokenRB.isExists()) {
 				refreshToken.expire(Duration.ofHours(4));
 				accessTokenRB.expire(Duration.ofHours(1));
 				return chain.filter(exchange);

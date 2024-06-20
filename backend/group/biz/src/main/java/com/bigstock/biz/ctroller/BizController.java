@@ -11,11 +11,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bigstock.biz.service.BizService;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("biz")
+@Tag(name = "BIZ Controller", description = "Auth for loggin and api")
 public class BizController {
 
 	private final BizService bizService;
@@ -23,7 +25,7 @@ public class BizController {
 	@GetMapping("stockShareholderStructure/{stockCode}")
 	public ResponseEntity<List<ShareholderStructure>> getStockShareholderStructure(
 			@PathVariable("stockCode") String stockCode) {
-		return ResponseEntity.ok(bizService.getStockShareholderStructure(stockCode,52));
+		return ResponseEntity.ok(bizService.getStockShareholderStructure(stockCode, 52));
 	}
-	
+
 }

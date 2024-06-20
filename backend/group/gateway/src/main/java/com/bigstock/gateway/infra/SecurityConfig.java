@@ -33,7 +33,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
 import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
-
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -50,16 +49,16 @@ public class SecurityConfig {
 	BigStockGatewayCustomWebFilter bigStockGatewayCustomWebFilter;
 
 	@Bean
-    public ReactiveJwtDecoder reactiveJwtDecoder() {
+	public ReactiveJwtDecoder reactiveJwtDecoder() {
 		SecretKey signingKey = new SecretKeySpec(secretKey.getBytes(), "HMAC-SHA-512");
 		return NimbusReactiveJwtDecoder.withSecretKey(signingKey).build();
-    }
-	
+	}
+
 //	@Bean
 //	public JwtDecoder jwtDecoder(ReactiveJwtDecoder reactiveJwtDecoder) {
 //	    return new JwtDecoderAdapter(reactiveJwtDecoder);
 //	}
-	
+
 	@Bean
 	public JwtAuthenticationConverter jwtAuthenticationConverter() {
 		JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
@@ -80,15 +79,32 @@ public class SecurityConfig {
 						// EAM 系統
 						.pathMatchers(HttpMethod.POST, "/txn")
 						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
-						.pathMatchers(HttpMethod.POST, "/gateway/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
-						.pathMatchers(HttpMethod.GET, "/gateway/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
-						.pathMatchers(HttpMethod.GET, "/api/biz/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
-						.pathMatchers(HttpMethod.POST, "/api/biz/**").access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member")))
+						.pathMatchers(HttpMethod.POST, "/gateway/**")
+						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.GET, "/gateway/swagger/**").permitAll()
+						.pathMatchers(HttpMethod.GET, "/gateway/**")
+						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.GET, "/biz/**")
+						
+						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.GET, "/api/biz/swagger/**").permitAll()
+						.pathMatchers(HttpMethod.GET, "/auth/swagger/**").permitAll()
+						.pathMatchers(HttpMethod.POST, "/biz/**")
+						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member")))
 						.pathMatchers(HttpMethod.POST, "/auth/**").permitAll()
 						.pathMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
-						.pathMatchers(HttpMethod.GET, "/actuator/health").permitAll().and()	.oauth2ResourceServer(
-								oauth2ResourceServer -> oauth2ResourceServer.jwt().jwtAuthenticationConverter(this::convert)))
-				.csrf().disable().httpBasic().disable().formLogin().disable() ;;
+//						.pathMatchers(HttpMethod.POST, "/swagger/**").permitAll()
+//						.pathMatchers(HttpMethod.GET, "/swagger/**").permitAll()
+						.pathMatchers(HttpMethod.POST, "/webjars/**").permitAll()
+						.pathMatchers(HttpMethod.GET, "/webjars/**").permitAll()
+//						.pathMatchers(HttpMethod.POST, "/swagger-ui.html").permitAll()
+//						.pathMatchers(HttpMethod.GET, "/swagger-ui.html").permitAll()
+
+						.pathMatchers(HttpMethod.GET, "/actuator/health").permitAll().and()
+						.oauth2ResourceServer(oauth2ResourceServer -> oauth2ResourceServer.jwt()
+								.jwtAuthenticationConverter(this::convert)))
+				.csrf().disable().httpBasic().disable().formLogin().disable();
+		;
 
 		return http.build();
 	}
@@ -120,8 +136,8 @@ public class SecurityConfig {
 		if (authoritiesObj == null) {
 			return Mono.just(new JwtAuthenticationToken(jwt, CollectionUtils.EMPTY_COLLECTION));
 		}
-		Collection<SimpleGrantedAuthority> authorities = ((Collection<String>) authoritiesObj)
-				.stream().map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
+		Collection<SimpleGrantedAuthority> authorities = ((Collection<String>) authoritiesObj).stream()
+				.map(SimpleGrantedAuthority::new).collect(Collectors.toSet());
 		return Mono.just(new JwtAuthenticationToken(jwt, authorities));
 	}
 }

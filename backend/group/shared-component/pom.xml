@@ -15,19 +15,20 @@
 			<artifactId>redisson</artifactId>
 			<version>3.27.1</version>
 		</dependency>
+
 		<!--
-		https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-annotations -->
+		https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-starter-webflux-api -->
 		<dependency>
-			<groupId>io.swagger.core.v3</groupId>
-			<artifactId>swagger-annotations</artifactId>
-			<version>2.2.21</version>
+			<groupId>io.github.classgraph</groupId>
+			<artifactId>classgraph</artifactId>
+			<version>4.8.139</version>
 		</dependency>
-		<!--
-		https://mvnrepository.com/artifact/io.swagger.core.v3/swagger-models -->
+
 		<dependency>
-			<groupId>io.swagger.core.v3</groupId>
-			<artifactId>swagger-models</artifactId>
-			<version>2.2.21</version>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-api</artifactId>
+			<version>2.5.0</version>
 		</dependency>
 	</dependencies>
+
 </project>

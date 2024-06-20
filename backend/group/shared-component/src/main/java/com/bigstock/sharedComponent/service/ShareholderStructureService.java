@@ -4,7 +4,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -87,7 +86,7 @@ public class ShareholderStructureService {
 
 		// 尝试从缓存获取数据
 		RMapCache<String, ShareholderStructure> innerMapCache = outerMapCache.get(key);
-		if (innerMapCache != null) {
+		if (innerMapCache != null && !innerMapCache.readAllValues().isEmpty()) {
 			innerMapCache.expire(Duration.ofDays(10));
 			List<ShareholderStructure> ss = new ArrayList<>(innerMapCache.readAllValues());
 			Collections.sort(ss, Comparator.comparing(ShareholderStructure::getId).reversed()); 

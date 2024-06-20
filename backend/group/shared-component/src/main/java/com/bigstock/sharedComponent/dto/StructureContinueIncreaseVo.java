@@ -3,8 +3,8 @@ package com.bigstock.sharedComponent.dto;
 import java.io.Serializable;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
 import lombok.Data;
+
 
 /**
  * "個股名稱","個股編號","個股總發行股數","400張以上大股東持股數","當週日期"
