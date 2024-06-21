@@ -38,6 +38,9 @@ public class GraspShareholderStructureService {
 
 	@Value("${schedule.chromeDriverPath.linux.driver-path}")
 	private String linuxChromeDriverPath;
+	@Value("${schedule.task.scheduling.cron.expression.sync-start-date}")
+	private String syncStartDate;
+	
 	
 //	@Value("${schedule.chromeDriverPath.linux.chrome-path}")
 //	private String linuxChromePath;
@@ -81,7 +84,7 @@ public class GraspShareholderStructureService {
 					Optional<StockInfo> stockInfoOp = stockInfoService.findById(stockCode);
 					if (stockInfoOp.isPresent()) {
 						log.info("ssList is empty : {}, so create data", stockCode);
-						refreshStockLatestInfo(stockCode, stockInfoOp.get().getStockName(), "20240405");
+						refreshStockLatestInfo(stockCode, stockInfoOp.get().getStockName(), syncStartDate);
 					} else {
 						log.info(String.format("ssList is empty : %1s , and StockInfo is not exsits either", stockCode)   );
 					}
