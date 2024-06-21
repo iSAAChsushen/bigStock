@@ -21,11 +21,15 @@ public class UserAccount {
     @Id
     @Column(name = "id")
     private BigInteger id;
+    
+
+    @Column(name = "user_account", unique = true, nullable = false)
+    private String user_account;
 
     @Column(name = "phone")
     private String phone;
 
-    @Column(name = "mail")
+    @Column(name = "mail", unique = true, nullable = false)
     private String email;
 
     @Column(name = "gender")
@@ -51,4 +55,7 @@ public class UserAccount {
 
     @Column(name = "user_password")
     private String userPassword;
+    
+    @Column(name = "status")
+    private String status;
 }

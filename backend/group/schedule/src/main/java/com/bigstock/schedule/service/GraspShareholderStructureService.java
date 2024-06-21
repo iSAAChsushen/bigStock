@@ -68,7 +68,7 @@ public class GraspShareholderStructureService {
 				if (!ssList.isEmpty()) {
 					ShareholderStructure lastesShareholderStructure = shareholderStructureService
 							.getShareholderStructureByStockCodeDesc(stockCode).get(0);
-					String weekOfYear = lastesShareholderStructure.getWeekOfYear();
+					String weekOfYear = shareholderStructureService.getMaxWeekOfYear();
 					int wIndex = weekOfYear.indexOf('W');
 					String year = weekOfYear.substring(wIndex - 2, wIndex);
 					List<String> areadyFinshGrapsStockCodes = shareholderStructureService.getAreadyFinshGrapsStockCode(weekOfYear);

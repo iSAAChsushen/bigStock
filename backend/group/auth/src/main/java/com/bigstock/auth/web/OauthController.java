@@ -26,10 +26,13 @@ public class OauthController {
     public String refreshToken(@RequestBody TokenInfo refreshTokenInfo) {
         return oauthTokenService.refreshToken(refreshTokenInfo.getRefreshToken());
     }
-	 @Operation(summary = "Get Example", description = "Get Example Description")
-    @PostMapping(value="login", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public String login(@RequestBody UserInloginInfo userInloginInfo) {
-        return oauthTokenService.userLoginHandle(userInloginInfo);
-    }
+
+	@Operation(summary = "Get Example", description = "Get Example Description")
+	@PostMapping(value = "login", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public String login(@RequestBody UserInloginInfo userInloginInfo) {
+		return oauthTokenService.userLoginHandle(userInloginInfo);
+	}
+	
+	
     
 }
