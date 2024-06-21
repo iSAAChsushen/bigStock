@@ -45,7 +45,7 @@ schedule:
           grasp-stock-price: "0 0 20 ? * *"
           update-shareholder-structure: "0 0 8 ? * SUN"
           update-stock-info: "0 0 8 ? * SAT"
-          sync-start-date: 20240611
+          sync-start-date: 20240606
   chromeDriverPath:
     windows: 
       active: false	
