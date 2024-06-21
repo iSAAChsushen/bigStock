@@ -62,6 +62,7 @@ public class ChromeDriverUtils {
 			String overTheCounterUrl) throws InterruptedException {
 		ChromeDriverService service = new ChromeDriverService.Builder()
 				.usingDriverExecutable(new File(chromeDriverPath)).usingAnyFreePort().build();
+		
 		List<StockInfo> stockInfos = Lists.newArrayList();
 		ChromeOptions options = new ChromeOptions();
 //		options.setBinary(linuxChromePath); // 指定Chrome的路徑
@@ -71,6 +72,7 @@ public class ChromeDriverUtils {
 		WebDriver driver = new ChromeDriver(service, options);
 		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
 		try {
+			log.info("begining sync grepStockInfo ");
 			driver.get(overTheCounterUrl);
 
 			Thread.sleep(4000);
@@ -157,6 +159,7 @@ public class ChromeDriverUtils {
 			log.error(e.getMessage(), e);
 		} finally {
 			driver.quit();
+			log.info("finshed add stockInfos ");
 		}
 		return stockInfos;
 	}

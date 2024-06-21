@@ -54,9 +54,9 @@ public class GraspShareholderStructureService {
 
 	private final StockInfoService stockInfoService;
 
-//	@PostConstruct
+	@PostConstruct
 	// 每周日早上8点触发更新
-	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
+//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
 	public void updateShareholderStructure() {
 		// 先抓DB裡面全部的代號資料
 		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
@@ -168,11 +168,12 @@ public class GraspShareholderStructureService {
 		return shareholderStructure;
 	}
 
-//	@PostConstruct
-	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
+	@PostConstruct
+//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
 	public void updateStockInfo() throws InterruptedException {
 		List<StockInfo> stockInfos = ChromeDriverUtils
 				.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, overTheCounterUrl);
 		stockInfoService.insertAll(stockInfos);
+		log.info("finsh sync updateStockInfo ");
 	}
 }

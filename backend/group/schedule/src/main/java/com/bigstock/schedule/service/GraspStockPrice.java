@@ -15,7 +15,6 @@ import java.util.Optional;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 
@@ -23,6 +22,7 @@ import com.bigstock.schedule.utils.ChromeDriverUtils;
 import com.bigstock.sharedComponent.entity.StockDayPrice;
 import com.bigstock.sharedComponent.service.StockDayPriceService;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,9 +56,9 @@ public class GraspStockPrice {
 
 	private final StockDayPriceService stockDayPriceService;
 
-//	@PostConstruct
+	@PostConstruct
 	// 每周日早上8点触发更新
-	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.grasp-stock-price}")
+//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.grasp-stock-price}")
 	public void updateShareholderStructure() throws RestClientException, URISyntaxException {
 		// 先抓DB裡面全部的代號資料
 		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
@@ -67,6 +67,7 @@ public class GraspStockPrice {
 				.stream().filter(map -> StringUtils.isNotBlank(map.get("stock_code"))).map(map -> {
 					StockDayPrice stockDayPrice = new StockDayPrice();
 					try {
+						log.info("begining sync stockDayPrice stockCode {}",map.get("stock_code"));
 						LocalDate today = Instant.ofEpochMilli(new SimpleDateFormat("yyyyMMdd").parse(map.get("trading_day")).getTime())
 							      .atZone(ZoneId.systemDefault())
 							      .toLocalDate();
@@ -101,5 +102,6 @@ public class GraspStockPrice {
 					return stockDayPrice;
 				}).filter(stockDayPrice -> Optional.ofNullable(stockDayPrice).isPresent()).toList();
 		stockDayPriceService.saveAll(stockDayPrices);
+		log.info("finsh sync stockDayPrice");
 	}
 }
