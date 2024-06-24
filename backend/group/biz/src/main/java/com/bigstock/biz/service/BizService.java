@@ -5,6 +5,7 @@ import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -12,8 +13,6 @@ import com.bigstock.sharedComponent.dto.SingleStockPriceVo;
 import com.bigstock.sharedComponent.dto.StructureContinueIncreaseVo;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
 import com.bigstock.sharedComponent.entity.StockDayPrice;
-import com.bigstock.sharedComponent.error.BizException;
-import com.bigstock.sharedComponent.error.ErrorCode;
 import com.bigstock.sharedComponent.service.ShareholderStructureService;
 import com.bigstock.sharedComponent.service.StockDayPriceService;
 
@@ -28,7 +27,7 @@ public class BizService {
 	private final StockDayPriceService stockDayPriceService;
 
 	public List<ShareholderStructure> getStockShareholderStructure(String stockCode, int limit) {
-		
+
 		return shareholderStructureService.getShareholderStructureByStockCodeDesc(stockCode).subList(0, limit);
 	}
 
@@ -39,31 +38,28 @@ public class BizService {
 		// 設置本周最後一天的日期
 		var endOfWeekLocalDate = searchLocalDate.with(DayOfWeek.SUNDAY);
 
-		var startOfWeeDate = Date.from(startOfWeekLocalDate.atStartOfDay()
-		        .atZone(ZoneId.systemDefault()) // 使用 ZoneId 对象
-		        .toInstant());
-		var endOfWeekDate = Date
-				.from(endOfWeekLocalDate.atStartOfDay() .atZone(ZoneId.systemDefault()) // 使用 ZoneId 对象
-				        .toInstant());
+		var startOfWeeDate = Date.from(startOfWeekLocalDate.atStartOfDay().atZone(ZoneId.systemDefault()) // 使用 ZoneId
+																											// 对象
+				.toInstant());
+		var endOfWeekDate = Date.from(endOfWeekLocalDate.atStartOfDay().atZone(ZoneId.systemDefault()) // 使用 ZoneId 对象
+				.toInstant());
 		List<StockDayPrice> stockDayPrices = stockDayPriceService.findByStockCodeAndDateRange(stockCode, startOfWeeDate,
 				endOfWeekDate);
-		String highPrice = stockDayPrices.stream().max(Comparator.comparing(StockDayPrice::getHighPrice))
-				.orElseThrow(() -> new BizException(
-						ErrorCode.BIZ_CAN_NOT_FIND_STOCK_DAY_PRICE_HEIGH_OR_LOW_PRICE_OR_OPENING_PRICE_OR_CLOSE_PRICE))
-				.getHighPrice();
-		String lowPrice = stockDayPrices.stream().min(Comparator.comparing(StockDayPrice::getHighPrice))
-				.orElseThrow(() -> new BizException(
-						ErrorCode.BIZ_CAN_NOT_FIND_STOCK_DAY_PRICE_HEIGH_OR_LOW_PRICE_OR_OPENING_PRICE_OR_CLOSE_PRICE))
-				.getHighPrice();
-		String openingPrice = stockDayPrices.stream().findFirst()
-				.orElseThrow(() -> new BizException(
-						ErrorCode.BIZ_CAN_NOT_FIND_STOCK_DAY_PRICE_HEIGH_OR_LOW_PRICE_OR_OPENING_PRICE_OR_CLOSE_PRICE))
-				.getOpeningPrice();
-		String closingPrice = stockDayPrices.stream().reduce((first, second) -> second)
-				.orElseThrow(() -> new BizException(
-						ErrorCode.BIZ_CAN_NOT_FIND_STOCK_DAY_PRICE_HEIGH_OR_LOW_PRICE_OR_OPENING_PRICE_OR_CLOSE_PRICE))
-				.getClosingPrice();
-		
+		Optional<StockDayPrice> highPriceStockDayPriceOp = stockDayPrices.stream()
+				.max(Comparator.comparing(StockDayPrice::getHighPrice));
+		String highPrice = highPriceStockDayPriceOp.isPresent() ? highPriceStockDayPriceOp.get().getHighPrice() : "0.0";
+		Optional<StockDayPrice> lowPriceStockDayPriceOp = stockDayPrices.stream()
+				.min(Comparator.comparing(StockDayPrice::getHighPrice));
+		String lowPrice = lowPriceStockDayPriceOp.isPresent() ? lowPriceStockDayPriceOp.get().getHighPrice() : "0.0";
+		Optional<StockDayPrice> openingPricStockDayPriceOp = stockDayPrices.stream().findFirst();
+		String openingPrice = openingPricStockDayPriceOp.isPresent()
+				? openingPricStockDayPriceOp.get().getOpeningPrice()
+				: "0.0";
+		Optional<StockDayPrice> closingPriceStockDayPriceOp = stockDayPrices.stream().reduce((first, second) -> second);
+		String closingPrice = closingPriceStockDayPriceOp.isPresent()
+				? closingPriceStockDayPriceOp.get().getClosingPrice()
+				: "0.0";
+
 		SingleStockPriceVo vo = new SingleStockPriceVo();
 		vo.setClosingPrice(closingPrice);
 		vo.setOpeningPrice(openingPrice);
