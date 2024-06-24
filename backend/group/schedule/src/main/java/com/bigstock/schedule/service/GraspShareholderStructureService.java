@@ -71,15 +71,8 @@ public class GraspShareholderStructureService {
 				if (!ssList.isEmpty()) {
 					ShareholderStructure lastesShareholderStructure = shareholderStructureService
 							.getShareholderStructureByStockCodeDesc(stockCode).get(0);
-					String weekOfYear = shareholderStructureService.getMaxWeekOfYear();
-					int wIndex = weekOfYear.indexOf('W');
-					String year = weekOfYear.substring(wIndex - 2, wIndex);
-					List<String> areadyFinshGrapsStockCodes = shareholderStructureService.getAreadyFinshGrapsStockCode(weekOfYear);
-					if(areadyFinshGrapsStockCodes.contains(stockCode)) {
-						return;
-					}
 					refreshStockLatestInfo(stockCode, lastesShareholderStructure.getStockName(),
-							convertToDate(year + lastesShareholderStructure.getCountDate()));
+							syncStartDate);
 				} else {
 					Optional<StockInfo> stockInfoOp = stockInfoService.findById(stockCode);
 					if (stockInfoOp.isPresent()) {

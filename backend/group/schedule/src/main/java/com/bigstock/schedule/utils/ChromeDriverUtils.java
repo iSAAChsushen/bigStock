@@ -97,7 +97,7 @@ public class ChromeDriverUtils {
 			WebElement siiSearchButton = wait.until(
 					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
 			siiSearchButton.click();
-
+			Thread.sleep(2000);
 //			// 点击按钮
 //			searchButton.click();
 			wait.until(ExpectedConditions
@@ -138,7 +138,7 @@ public class ChromeDriverUtils {
 			WebElement otcSearchButton = wait.until(
 					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
 			otcSearchButton.click();
-
+			Thread.sleep(2000);
 //			// 点击按钮
 //			searchButton.click();
 			wait.until(ExpectedConditions

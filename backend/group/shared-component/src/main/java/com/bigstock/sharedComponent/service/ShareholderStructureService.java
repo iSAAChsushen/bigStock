@@ -89,7 +89,7 @@ public class ShareholderStructureService {
 		if (innerMapCache != null && !innerMapCache.readAllValues().isEmpty()) {
 			innerMapCache.expire(Duration.ofDays(10));
 			List<ShareholderStructure> ss = new ArrayList<>(innerMapCache.readAllValues());
-			Collections.sort(ss, Comparator.comparing(ShareholderStructure::getId).reversed()); 
+			Collections.sort(ss, Comparator.comparing(ShareholderStructure::getWeekOfYear).reversed()); 
 			return ss;
 		} else {
 			// 缓存中没有数据，从数据库获取
