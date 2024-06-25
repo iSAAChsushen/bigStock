@@ -21,11 +21,8 @@ import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusReactiveJwtDecoder;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
-import org.springframework.security.oauth2.jwt.ReactiveJwtDecoders;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.security.web.server.SecurityWebFilterChain;
@@ -84,8 +81,9 @@ public class SecurityConfig {
 						.pathMatchers(HttpMethod.GET, "/gateway/swagger/**").permitAll()
 						.pathMatchers(HttpMethod.GET, "/gateway/**")
 						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
-						.pathMatchers(HttpMethod.GET, "/biz/**")
-						
+						.pathMatchers(HttpMethod.GET, "/biz/**")		
+						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.GET, "/api/biz/**")		
 						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
 						.pathMatchers(HttpMethod.GET, "/api/biz/swagger/**").permitAll()
 						.pathMatchers(HttpMethod.GET, "/auth/swagger/**").permitAll()
