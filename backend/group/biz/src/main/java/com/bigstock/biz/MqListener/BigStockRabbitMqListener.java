@@ -94,6 +94,7 @@ public class BigStockRabbitMqListener {
 					new CorrelationData());
 //		rabbitTemplate.convertAndSend("sendExchange", message, message,new CorrelationData());
 		} catch (Exception e) {
+			log.error(e.getMessage(),e);
 			rabbitTemplate.convertAndSend("SingleStockPriceExchangeError", "SingleStockPriceQueueError", jsonMessage);
 		}
 	}
@@ -119,7 +120,9 @@ public class BigStockRabbitMqListener {
 			rabbitTemplate.convertAndSend(sendExchangeName, uuid, voString, messagePostProcessor,
 					new CorrelationData());
 		} catch (Exception e) {
+			//這裡應該也要給mq處理
 			log.error(e.getMessage(),e);
+			rabbitTemplate.convertAndSend("ShareholderStructureIncreaseExchangeError", "ShareholderStructureIncreaseExchangeError", jsonMessage);
 		}
 	}
 }

@@ -1,11 +1,14 @@
 package com.bigstock.biz.service;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.temporal.IsoFields;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.stereotype.Service;
 
@@ -70,11 +73,14 @@ public class BizService {
 	}
 
 	public List<StructureContinueIncreaseVo> getShareholderStructureContinueIncreaseLastTowWeeks() {
-		String firstWeekOfYear = shareholderStructureService.getMaxWeekOfYear();
-		String secondMaxWeekOfYear = shareholderStructureService
-				.getMaxWeekOfYearExcludeSpecificDate(List.of(firstWeekOfYear));
-		String thirdMaxWeekOfYear = shareholderStructureService
-				.getMaxWeekOfYearExcludeSpecificDate(List.of(firstWeekOfYear, secondMaxWeekOfYear));
+		LocalDate today = LocalDate.now();
+		AtomicInteger weekOfYears = new AtomicInteger(today.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
+
+		String firstWeekOfYear = findMaxWeek(today, weekOfYears);
+		 weekOfYears.addAndGet(-1);
+		String secondMaxWeekOfYear = findMaxWeek(today, weekOfYears);
+		 weekOfYears.addAndGet(-1);
+		String thirdMaxWeekOfYear = findMaxWeek(today, weekOfYears);
 		return shareholderStructureService
 				.getShareholderStructureLastTwoWeeks(firstWeekOfYear, secondMaxWeekOfYear, thirdMaxWeekOfYear).stream()
 				.map(shareholderStructure -> {
@@ -92,5 +98,21 @@ public class BizService {
 					vo.setOverOneThousandBoardLot(shareholderStructure.getOverOneThousandBoardLot());
 					return vo;
 				}).toList();
+	}
+
+	private String findMaxWeek(LocalDate today, AtomicInteger weekOfYear) {
+		boolean checkResult = false;
+		while (!checkResult) {
+			String week = String.valueOf(today.getYear()) + "W" + weekOfYear.get();
+			checkResult = shareholderStructureService.checkWeekExist(week);
+			if(!checkResult) {
+				weekOfYear.addAndGet(-1);
+			}
+			if ( weekOfYear.get() == 0) {
+				today = today.minusYears(1).withMonth(12).withDayOfMonth(31);
+				weekOfYear = new AtomicInteger(today.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
+			}
+		}
+		return String.valueOf(today.getYear()) + "W" + weekOfYear;
 	}
 }

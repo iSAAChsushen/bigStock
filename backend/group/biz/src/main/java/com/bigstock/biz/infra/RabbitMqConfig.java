@@ -58,9 +58,6 @@ public class RabbitMqConfig {
 	}
 	
 	
-	
-	
-	
 	@Bean
 	public DirectExchange shareholderStructureIncreaseExchange() {
 		return new DirectExchange("ShareholderStructureIncreaseExchange", true, false);

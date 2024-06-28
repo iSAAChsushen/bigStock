@@ -1,18 +1,14 @@
 package com.bigstock.sharedComponent.service;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
-import org.redisson.api.RList;
-import org.redisson.api.RMapCache;
-import org.redisson.api.RedissonClient;
+import org.springframework.aop.framework.AopContext;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import com.bigstock.sharedComponent.annotation.BacchusCacheableWithLock;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
 import com.bigstock.sharedComponent.repository.ShareholderStructureRepository;
 
@@ -22,28 +18,34 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ShareholderStructureService {
 	private final ShareholderStructureRepository shareholderStructureRepository;
-	private final RedissonClient redissonClient;
+
+	private final RedissonCacheService redissonCacheService;
 
 	public List<ShareholderStructure> getAll() {
 		return shareholderStructureRepository.findAll();
 	}
 
+	@Cacheable(value = "longLivedCache", key = "#id")
 	public Optional<ShareholderStructure> getById(String id) {
-		return shareholderStructureRepository.findById(id);
+		return getSelf().getByIdWithDataBase(id);
 	}
 
+	@CacheEvict(value = { "shortLivedCache", "longLivedCache", "defaultCache" }, allEntries = true)
 	public ShareholderStructure insert(ShareholderStructure shareholderStructure) {
 		return shareholderStructureRepository.save(shareholderStructure);
 	}
 
+	@CacheEvict(value = { "shortLivedCache", "longLivedCache", "defaultCache" }, allEntries = true)
 	public List<ShareholderStructure> insert(List<ShareholderStructure> shareholderStructures) {
 		return shareholderStructureRepository.saveAll(shareholderStructures);
 	}
 
+	@CacheEvict(value = { "shortLivedCache", "longLivedCache", "defaultCache" }, allEntries = true)
 	public void delete(String id) {
 		shareholderStructureRepository.deleteById(id);
 	}
 
+	@CacheEvict(value = { "shortLivedCache", "longLivedCache", "defaultCache" }, allEntries = true)
 	public void delete(ShareholderStructure shareholderStructure) {
 		shareholderStructureRepository.delete(shareholderStructure);
 	}
@@ -51,73 +53,40 @@ public class ShareholderStructureService {
 	public List<String> getAllShareholderStructureStockCode() {
 		return shareholderStructureRepository.getAllShareholderStructureStockCode();
 	}
-	
-	public List<ShareholderStructure>  getShareholderStructureLastTwoWeeks(String firstWeekOfYear, String secondWeekOfYear,
-			String thirdWeekOfYear){
-		String key = firstWeekOfYear + secondWeekOfYear + thirdWeekOfYear;
-		RMapCache<String, RList<ShareholderStructure>> outerMapCache = redissonClient
-				.getMapCache("shareholderStructures-lastTwoWeeks");
-		RList<ShareholderStructure> innerListCache = outerMapCache.get(key);
-		if (innerListCache != null) {
-			innerListCache.expire(Duration.ofDays(10));
-			List<ShareholderStructure> ss = innerListCache.readAll();
-			Collections.sort(ss, Comparator.comparing(ShareholderStructure::getId).reversed()); 
-			return ss;
-		} else {
-			// 缓存中没有数据，从数据库获取
-			List<ShareholderStructure> dbDatas = shareholderStructureRepository
-					.getByOverFourHundreLotContinueIncrease(firstWeekOfYear, secondWeekOfYear, thirdWeekOfYear);
 
-			// 构建内部的 Hash 表缓存
-			innerListCache = redissonClient.getList(key);
-			innerListCache.addAll(dbDatas);
-			
-			// 将内部的 Hash 表缓存存入外部的 Hash 表缓存
-			outerMapCache.put(key, innerListCache, 10, TimeUnit.DAYS);
+	@Cacheable(value = "longLivedCache", key = "#p0 + '-' + #p1 + '-' + #p2")
+	public List<ShareholderStructure> getShareholderStructureLastTwoWeeks(String firstWeekOfYear,
+			String secondWeekOfYear, String thirdWeekOfYear) {
 
-			return dbDatas;
-		}
+		return getSelf().getShareholderStructureLastTwoWeeksWithDataBase(firstWeekOfYear, secondWeekOfYear, thirdWeekOfYear);
 	}
 
+	@Cacheable(value = "longLivedCache", key = "#stockCode")
 	public List<ShareholderStructure> getShareholderStructureByStockCodeDesc(String stockCode) {
-		String key = stockCode;
-		RMapCache<String, RMapCache<String, ShareholderStructure>> outerMapCache = redissonClient
-				.getMapCache("shareholderStructures");
+		return getSelf().getShareholderStructureByStockCodeDescWithDataBase(stockCode);
+	}
 
-		// 尝试从缓存获取数据
-		RMapCache<String, ShareholderStructure> innerMapCache = outerMapCache.get(key);
-		if (innerMapCache != null && !innerMapCache.readAllValues().isEmpty()) {
-			innerMapCache.expire(Duration.ofDays(10));
-			List<ShareholderStructure> ss = new ArrayList<>(innerMapCache.readAllValues());
-			Collections.sort(ss, Comparator.comparing(ShareholderStructure::getWeekOfYear).reversed()); 
-			return ss;
-		} else {
-			// 缓存中没有数据，从数据库获取
-			List<ShareholderStructure> dbDatas = shareholderStructureRepository
-					.getShareholderStructureByStockCodeDesc(stockCode);
+	public boolean checkWeekExist(String weekOfYear) {
+		return shareholderStructureRepository.countByWeekOfYear(weekOfYear) > 0;
+	}
 
-			// 构建内部的 Hash 表缓存
-			innerMapCache = redissonClient.getMapCache(stockCode);
-			for (ShareholderStructure dbData : dbDatas) {
-				innerMapCache.put(dbData.getWeekOfYear(), dbData, 2, TimeUnit.DAYS);
-			}
+	@BacchusCacheableWithLock(value = "longLivedCache", key = "#id")
+	public Optional<ShareholderStructure> getByIdWithDataBase(String id) {
+		return shareholderStructureRepository.findById(id);
+	}
 
-			// 将内部的 Hash 表缓存存入外部的 Hash 表缓存
-			outerMapCache.put(key, innerMapCache, 13, TimeUnit.DAYS);
+	@BacchusCacheableWithLock(value = "longLivedCache", key = "#p0 + '-' + #p1 + '-' + #p2")
+	public List<ShareholderStructure> getShareholderStructureLastTwoWeeksWithDataBase(String firstWeekOfYear,
+			String secondWeekOfYear, String thirdWeekOfYear) {
+		return shareholderStructureRepository.getByOverFourHundreLotContinueIncrease(firstWeekOfYear, secondWeekOfYear, thirdWeekOfYear);
+	}
 
-			return dbDatas;
-		}
+	@BacchusCacheableWithLock(value = "longLivedCache", key = "#id")
+	public List<ShareholderStructure> getShareholderStructureByStockCodeDescWithDataBase(String stockCode) {
+		return shareholderStructureRepository.getShareholderStructureByStockCodeDesc(stockCode);
 	}
 	
-	public String getMaxWeekOfYear() {
-		return shareholderStructureRepository.getMaxWeekOfYear();
-	}
-
-	public String getMaxWeekOfYearExcludeSpecificDate(List<String> weekOfYears) {
-		return shareholderStructureRepository.getMaxWeekOfYearExcludeSpecificDate(weekOfYears);
-	}
-	
-	public List<String> getAreadyFinshGrapsStockCode(String maxWeekOfYear){
-		return shareholderStructureRepository.getAreadyFinshGrapsStockCode(maxWeekOfYear);
+	private ShareholderStructureService getSelf() {
+		return (ShareholderStructureService) AopContext.currentProxy();
 	}
 }

@@ -43,9 +43,9 @@ logging:
   config: classpath:logback.xml
   level:
     org:
-      springdoc: DEBUG
+      springdoc: INFO
       springframework:
-        web: DEBUG 
+        web: INFO 
   
 springdoc:
   api-docs:

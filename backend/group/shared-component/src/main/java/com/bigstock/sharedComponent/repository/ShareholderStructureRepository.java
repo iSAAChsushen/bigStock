@@ -21,13 +21,10 @@ public interface ShareholderStructureRepository extends JpaRepository<Shareholde
 	public List<String> getAreadyFinshGrapsStockCode(@Param("maxWeekOfYear") String maxWeekOfYear);
 
 	@Query(value = "select s from ShareholderStructure s where s.weekOfYear between :startDate and :endDate")
-	public List<ShareholderStructure> getShareholderStructureLastTwoWeeks(@Param("startDate") String startDate, @Param("endDate") String endDate);
+	public List<ShareholderStructure> getShareholderStructureByWeeksBetween(@Param("startDate") String startDate, @Param("endDate") String endDate);
 
-	@Query(value = " select max(s.weekOfYear) from ShareholderStructure s ")
-	public String getMaxWeekOfYear();
-	
-	@Query(value = " select max(s.week_of_year) from bstock.shareholder_structure s where s.week_of_year  not in (:weekOfYears)", nativeQuery= true)
-	public String getMaxWeekOfYearExcludeSpecificDate(@Param("weekOfYears") List<String> weekOfYears);
+	@Query(value = "SELECT count(*)  FROM ShareholderStructure s WHERE s.weekOfYear = :weekOfYear")
+	public int countByWeekOfYear(String weekOfYear);
 	
 	@Query(value ="select increase.* "
 			+ "from bstock.shareholder_structure increase "

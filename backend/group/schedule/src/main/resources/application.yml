@@ -34,6 +34,8 @@ spring:
         max-idle: 500
         min-idle: 10
         max-wait: 100000
+    cache:
+      type: redis    
 logging:
   config: classpath:logback.xml
 
