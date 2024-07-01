@@ -23,8 +23,8 @@ public class UserAccount {
     private BigInteger id;
     
 
-    @Column(name = "user_account", unique = true, nullable = false)
-    private String user_account;
+    @Column(name = "user_name", unique = true, nullable = false)
+    private String userName;
 
     @Column(name = "phone")
     private String phone;
