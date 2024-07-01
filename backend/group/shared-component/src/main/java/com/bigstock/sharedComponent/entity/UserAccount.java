@@ -18,44 +18,43 @@ import lombok.ToString;
 @Table(schema = "bstock", name = "user_account")
 public class UserAccount {
 
-    @Id
-    @Column(name = "id")
-    private BigInteger id;
-    
+	@Id
+	@Column(name = "id")
+	private String id;
 
-    @Column(name = "user_name", unique = true, nullable = false)
-    private String userName;
+	@Column(name = "phone")
+	private String phone;
 
-    @Column(name = "phone")
-    private String phone;
+	@Column(name = "mail", unique = true, nullable = false)
+	private String email;
 
-    @Column(name = "mail", unique = true, nullable = false)
-    private String email;
+	@Column(name = "gender")
+	private String gender;
 
-    @Column(name = "gender")
-    private String gender;
+	@Temporal(TemporalType.DATE)
+	@Column(name = "birth_date")
+	private Date birthDate;
 
-    @Temporal(TemporalType.DATE)
-    @Column(name = "birth_date")
-    private Date birthDate;
+	@Column(name = "role_id")
+	private String roleId;
 
-    @Column(name = "role_id")
-    private String roleId;
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "create_time")
+	private Date createTime;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "create_time")
-    private Date createTime;
+	@Temporal(TemporalType.TIMESTAMP)
+	@Column(name = "update_time")
+	private Date updateTime;
 
-    @Temporal(TemporalType.TIMESTAMP)
-    @Column(name = "update_time")
-    private Date updateTime;
+	@Column(name = "update_by")
+	private String updateBy;
 
-    @Column(name = "update_by")
-    private String updateBy;
+	@Column(name = "user_password")
+	private String userPassword;
 
-    @Column(name = "user_password")
-    private String userPassword;
-    
-    @Column(name = "status")
-    private String status;
+	@Column(name = "status")
+	private String status;
+
+	@Column(name = "user_name")
+	private String userName;
 }

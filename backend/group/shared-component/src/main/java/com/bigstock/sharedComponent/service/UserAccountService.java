@@ -23,7 +23,7 @@ public class UserAccountService {
         return userAccountRepository.findAll();
     }
 
-    public Optional<UserAccount> getById(BigInteger id) {
+    public Optional<UserAccount> getById(String id) {
         return userAccountRepository.findById(id);
     }
 
@@ -31,15 +31,15 @@ public class UserAccountService {
         return userAccountRepository.findByPhone(phone);
     }
 
-    public List<UserAccount> findByEmailIgnoreCase(String email) {
-        return userAccountRepository.findByEmailIgnoreCase(email);
+    public Optional<UserAccount> findByEmail(String email) {
+        return userAccountRepository.findByEmail(email);
     }
 
     public List<UserAccount> findByBirthDateAfter(Date birthDate) {
         return userAccountRepository.findByBirthDateAfter(birthDate);
     }
 
-    public UserAccount insert(UserAccount userAccount) {
+    public UserAccount save(UserAccount userAccount) {
         return userAccountRepository.save(userAccount);
     }
 
@@ -47,11 +47,22 @@ public class UserAccountService {
         return userAccountRepository.saveAll(userAccounts);
     }
 
-    public void deleteById(BigInteger id) {
+    public void deleteById(String id) {
         userAccountRepository.deleteById(id);
     }
 
     public void delete(UserAccount userAccount) {
         userAccountRepository.delete(userAccount);
+    }
+    
+    public Optional<UserAccount> findUserByEmailOrPhome(String emailOrPhone) {
+    	Optional<UserAccount>  userAccountOp = userAccountRepository.findByEmail(emailOrPhone);
+		if (userAccountOp.isEmpty()) {
+			userAccountOp = userAccountRepository.findByPhone(emailOrPhone).stream().findFirst();
+		}
+		if(userAccountOp.isEmpty()) {
+			userAccountOp = userAccountRepository.findByPhone(emailOrPhone).stream().findFirst();
+		}
+		return userAccountOp;
     }
 }

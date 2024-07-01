@@ -4,8 +4,6 @@ import java.time.Duration;
 import java.util.Date;
 import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
-import org.json.JSONObject;
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
@@ -43,16 +41,12 @@ public class OauthTokenService {
 
 	private final RedissonClient redissonClient;
 
-
 	public String userLoginHandle(UserInloginInfo userInloginInfo) {
 		BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 		String username = userInloginInfo.getUserName();
 		String password = userInloginInfo.getPassword();
 		Optional<UserAccount> userAccountOp = Optional.empty();
-		userAccountOp = userAccountService.findByEmailIgnoreCase(username).stream().findFirst();
-		if (userAccountOp.isEmpty()) {
-			userAccountOp = userAccountService.getByPhone(username).stream().findFirst();
-		}
+		userAccountOp = userAccountService.findUserByEmailOrPhome(username);
 		UserAccount userAccount = userAccountOp.orElseThrow(() -> new JwtException("user can not found"));
 		// 验证密码
 		if (!passwordEncoder.matches(password, userAccount.getUserPassword())) {
@@ -85,7 +79,7 @@ public class OauthTokenService {
 		return newAccessToken;
 	}
 
-	private Claims parseJwtToken(String token) throws JwtException {
+	public Claims parseJwtToken(String token) throws JwtException {
 		Jws<Claims> jws = Jwts.parser().verifyWith(Keys.hmacShaKeyFor(secretKey.getBytes())).build()
 				.parseSignedClaims(token);
 		return jws.getPayload();
@@ -122,10 +116,7 @@ public class OauthTokenService {
 		// 使用 Jwts.builder() 建立 JWT
 		JwtBuilder builder = Jwts.builder();
 		Optional<UserAccount> userAccountsOp = Optional.empty();
-			userAccountsOp = userAccountService.findByEmailIgnoreCase(subject).stream().findFirst();
-		if (userAccountsOp.isEmpty()) {
-			userAccountsOp = userAccountService.getByPhone(subject).stream().findFirst();
-		}
+		userAccountsOp = userAccountService.findUserByEmailOrPhome(subject);
 		if (userAccountsOp.isEmpty()) {
 			throw new JwtException("invalid token");
 		}
@@ -168,6 +159,24 @@ public class OauthTokenService {
 		// 設定 JWT 簽名
 		builder.signWith(Keys.hmacShaKeyFor(secretKey.getBytes()), Jwts.SIG.HS256);
 
+		// 建立並返回 JWT
+		return builder.compact();
+	}
+
+	public String generateRegistryToken(String subject) {
+		JwtBuilder builder = Jwts.builder();
+		builder.subject(subject);
+		// 設定 JWT 發行時間
+		builder.issuedAt(new Date());
+
+		// 設定 JWT 有效期
+		builder.expiration(new Date(System.currentTimeMillis() + Duration.ofHours(1).toMillis()));
+		// 添加 header
+		builder.header().add("typ", "JWT").and();
+		builder.header().add("alg", "HS256").and();
+		// 設定 JWT 簽名
+		builder.signWith(Keys.hmacShaKeyFor(secretKey.getBytes()), Jwts.SIG.HS256);
+		// 設定 JWT 簽名
 		// 建立並返回 JWT
 		return builder.compact();
 	}

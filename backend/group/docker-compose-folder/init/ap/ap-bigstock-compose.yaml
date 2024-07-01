@@ -54,6 +54,12 @@ services:
       SPRING_REDIS_PORT: 6379
       JAVA_COMMAND_STR: -Xlog:gc+heap=trace:file=/opt/bigstock/logs/Xlog.log:time,uptimemillis,tid  -XX:+UseG1GC -XX:+ExplicitGCInvokesConcurrent -Dcatalina.home=/opt/bigstock/ -Xms1024M -Xmx1024M -Xss256K  -XX:MetaspaceSize=512m -XX:MaxMetaspaceSize=512m  -XX:MaxGCPauseMillis=10 -XX:InitiatingHeapOccupancyPercent=60 -XX:+UnlockExperimentalVMOptions -XX:MaxTenuringThreshold=10 -XX:G1NewSizePercent=3
       JAR_NAME: bigstock-auth.jar 
+      SPRING_MAIL_HOST: smtp.gmail.com
+      SPRING_MAIL_PORT: 587
+      SPRING_MAIL_USERNAME: a26404691@gmail.com
+      SPRING_MAIL_PASSWORD: uynt zdgf suhj cjmi
+      SPRING_MAIL_FROM: a26404691@gmail.com
+      SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST: smtp.gmail.com
     deploy:
       resources:
         limits:

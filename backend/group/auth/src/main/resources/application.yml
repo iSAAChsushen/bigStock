@@ -38,7 +38,21 @@ spring:
     properties:
       hibernate:
         show-sql: true
-
+  mail:
+    host: ${SPRING_MAIL_HOST}
+    port: ${SPRING_MAIL_PORT}
+    username: ${SPRING_MAIL_USERNAME}
+    password: ${SPRING_MAIL_PASSWORD}
+    from: ${SPRING_MAIL_FROM}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST}    
 logging:
   config: classpath:logback.xml
   

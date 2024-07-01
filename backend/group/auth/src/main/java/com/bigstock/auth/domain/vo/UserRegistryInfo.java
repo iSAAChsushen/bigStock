@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.media.Schema.RequiredMode;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,7 +23,7 @@ public class UserRegistryInfo {
     @Schema(description = "Phone number of the user", example = "12345678901")
     private String phone;
 
-    @Schema(description = "Email address of the user", required = true, example = "example@mail.com")
+	@Schema(description = "Email address of the user", requiredMode = RequiredMode.REQUIRED, example = "example@mail.com")
     @NotBlank(message = "Mail is mandatory")
     private String mail;
 
@@ -33,19 +33,20 @@ public class UserRegistryInfo {
     @Schema(description = "Birth date of the user", example = "1990-01-01")
     private Date birthDate;
 
-    @Schema(description = "Role ID of the user", example = "A")
-    private String roleId;
-
     @Schema(description = "Time when the user account was created")
-    private LocalDateTime createTime;
+    @Builder.Default
+    private LocalDateTime createTime = LocalDateTime.now();
 
     @Schema(description = "Time when the user account was last updated")
-    private LocalDateTime updateTime;
+    @Builder.Default
+    @JsonIgnore
+    private LocalDateTime updateTime = LocalDateTime.now();
 
     @Schema(description = "Updated by user", example = "admin")
+    @JsonIgnore
     private String updateBy;
 
-    @Schema(description = "Password of the user account", example = "encryptedPassword")
+    @Schema(description = "Password of the user account", example = "encryptedPassword", requiredMode = RequiredMode.REQUIRED)
     private String userPassword;
 
     @JsonIgnore
@@ -55,12 +56,8 @@ public class UserRegistryInfo {
     @Schema(description = "Name of the user", example = "John Doe")
     private String userName;
 
-    @Schema(description = "User account name", required = true, example = "john_doe")
+    @Schema(description = "User account name", requiredMode = RequiredMode.REQUIRED, example = "john_doe")
     @NotBlank(message = "User account is mandatory")
-    private String userAccount;
+    private String userId;
 
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    public void setStatus(String status) {
-        this.status = status;
-    }
 }
