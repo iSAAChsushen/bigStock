@@ -1,10 +1,7 @@
 package com.bigstock.biz.service;
 
-import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.temporal.IsoFields;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -30,38 +27,22 @@ public class BizService {
 	private final StockDayPriceService stockDayPriceService;
 
 	public List<ShareholderStructure> getStockShareholderStructure(String stockCode, int limit) {
-
-		return shareholderStructureService.getShareholderStructureByStockCodeDesc(stockCode).subList(0, limit);
+		 List<ShareholderStructure> shareholderStructures = shareholderStructureService.getShareholderStructureByStockCodeDesc(stockCode);
+		 if(shareholderStructures.size() > 52) {
+			 return shareholderStructures.subList(0, limit);
+		 } else {
+			 return shareholderStructures;
+		 }
 	}
 
 	public SingleStockPriceVo getSingleStockPrice(String stockCode, Date searchDate) {
-		var searchLocalDate = searchDate.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-		var startOfWeekLocalDate = searchLocalDate.with(DayOfWeek.MONDAY);
 
-		// 設置本周最後一天的日期
-		var endOfWeekLocalDate = searchLocalDate.with(DayOfWeek.SUNDAY);
-
-		var startOfWeeDate = Date.from(startOfWeekLocalDate.atStartOfDay().atZone(ZoneId.systemDefault()) // 使用 ZoneId
-																											// 对象
-				.toInstant());
-		var endOfWeekDate = Date.from(endOfWeekLocalDate.atStartOfDay().atZone(ZoneId.systemDefault()) // 使用 ZoneId 对象
-				.toInstant());
-		List<StockDayPrice> stockDayPrices = stockDayPriceService.findByStockCodeAndDateRange(stockCode, startOfWeeDate,
-				endOfWeekDate);
-		Optional<StockDayPrice> highPriceStockDayPriceOp = stockDayPrices.stream()
-				.max(Comparator.comparing(StockDayPrice::getHighPrice));
-		String highPrice = highPriceStockDayPriceOp.isPresent() ? highPriceStockDayPriceOp.get().getHighPrice() : "0.0";
-		Optional<StockDayPrice> lowPriceStockDayPriceOp = stockDayPrices.stream()
-				.min(Comparator.comparing(StockDayPrice::getHighPrice));
-		String lowPrice = lowPriceStockDayPriceOp.isPresent() ? lowPriceStockDayPriceOp.get().getHighPrice() : "0.0";
-		Optional<StockDayPrice> openingPricStockDayPriceOp = stockDayPrices.stream().findFirst();
-		String openingPrice = openingPricStockDayPriceOp.isPresent()
-				? openingPricStockDayPriceOp.get().getOpeningPrice()
-				: "0.0";
-		Optional<StockDayPrice> closingPriceStockDayPriceOp = stockDayPrices.stream().reduce((first, second) -> second);
-		String closingPrice = closingPriceStockDayPriceOp.isPresent()
-				? closingPriceStockDayPriceOp.get().getClosingPrice()
-				: "0.0";
+		Optional<StockDayPrice> stockDayPriceOp = stockDayPriceService.findByStockCodeAndTradingDay(stockCode,
+				searchDate);
+		String highPrice = stockDayPriceOp.isPresent() ? stockDayPriceOp.get().getHighPrice() : "0.0";
+		String lowPrice = stockDayPriceOp.isPresent() ? stockDayPriceOp.get().getLowPrice() : "0.0";
+		String openingPrice = stockDayPriceOp.isPresent() ? stockDayPriceOp.get().getOpeningPrice() : "0.0";
+		String closingPrice = stockDayPriceOp.isPresent() ? stockDayPriceOp.get().getClosingPrice() : "0.0";
 
 		SingleStockPriceVo vo = new SingleStockPriceVo();
 		vo.setClosingPrice(closingPrice);
