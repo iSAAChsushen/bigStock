@@ -7,7 +7,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
 
 @SpringBootApplication(scanBasePackages = {"com.bigstock.schedule","com.bigstock.sharedComponent"})
-@EnableAspectJAutoProxy(proxyTargetClass = true)
+@EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 @EnableCaching
 public class ScheduleApp {
 	public static void main(String[] args) {
