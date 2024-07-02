@@ -5,11 +5,8 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.redisson.api.RMapCache;
-import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.bigstock.schedule.utils.ChromeDriverUtils;
@@ -51,8 +48,6 @@ public class GraspShareholderStructureService {
 	@Value("${schedule.overTheCounterUrl}")
 	private String overTheCounterUrl;
 
-	private final RedissonClient redissonClient;
-
 	private final ShareholderStructureService shareholderStructureService;
 
 	private final StockInfoService stockInfoService;
@@ -89,17 +84,17 @@ public class GraspShareholderStructureService {
 		});
 	}
 
-	private String convertToDate(String inputDate) {
-		// 解析年份的后两位
-		String year = "20" + inputDate.substring(0, 2);
-
-		// 解析周数和天数
-		String mounth = inputDate.substring(2, 4);
-		String day = inputDate.substring(5);
-
-		// 将日期格式化为字符串
-		return year + mounth + day;
-	}
+//	private String convertToDate(String inputDate) {
+//		// 解析年份的后两位
+//		String year = "20" + inputDate.substring(0, 2);
+//
+//		// 解析周数和天数
+//		String mounth = inputDate.substring(2, 4);
+//		String day = inputDate.substring(5);
+//
+//		// 将日期格式化为字符串
+//		return year + mounth + day;
+//	}
 
 	private void refreshStockLatestInfo(String stockCode, String stockName, String latestCountDateStr)
 			throws InterruptedException {
@@ -111,22 +106,21 @@ public class GraspShareholderStructureService {
 				return createShareholderStructure(weekInfo, stockCode, stockName);
 			}).toList();
 			shareholderStructureService.insert(shareholderStructures);
-			clearCache(stockCode);
 		}
 	}
 
-	private void clearCache(String stockCode) {
+//	private void clearCache(String stockCode) {
 		// 设置最大缓存大小
-		RMapCache<String, RMapCache<String, ShareholderStructure>> outerMapCache = redissonClient
-				.getMapCache("shareholderStructures");
-
-		// 尝试从缓存获取数据
-		RMapCache<String, ShareholderStructure> innerMapCache = outerMapCache.get(stockCode);
-		innerMapCache.delete();
-		outerMapCache.remove(stockCode);
-		// 插入最新的缓存数据
+//		RMapCache<String, RMapCache<String, ShareholderStructure>> outerMapCache = redissonClient
+//				.getMapCache("shareholderStructures");
+//
+//		// 尝试从缓存获取数据
+//		RMapCache<String, ShareholderStructure> innerMapCache = outerMapCache.get(stockCode);
+//		innerMapCache.delete();
+//		outerMapCache.remove(stockCode);
+//		// 插入最新的缓存数据
 //		sortedValues.stream()
-	}
+//	}
 
 	private ShareholderStructure createShareholderStructure(Map<Integer, String> weekInfo, String stockCode,
 			String stockName) {
