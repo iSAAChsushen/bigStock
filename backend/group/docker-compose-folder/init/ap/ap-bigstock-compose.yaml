@@ -60,6 +60,7 @@ services:
       SPRING_MAIL_PASSWORD: uynt zdgf suhj cjmi
       SPRING_MAIL_FROM: a26404691@gmail.com
       SPRING_MAIL_PROPERTIES_MAIL_SMTP_SSL_TRUST: smtp.gmail.com
+      SERVER_REGISTRY_VERIFY_RUL: http://127.0.0.1:10093/auth/verify?token= 
     deploy:
       resources:
         limits:
