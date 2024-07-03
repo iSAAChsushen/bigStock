@@ -67,16 +67,12 @@ public class BigStockRabbitMqListener {
 	@RabbitListener(bindings = @QueueBinding(value = @Queue(value = "SingleStockPriceQueue"), exchange = @Exchange(value = "SingleStockPriceExchange", type = ExchangeTypes.DIRECT), // 这里指定交换机类型为
 																																														// TOPIC
 			key = "SingleStockPriceQueue" // 这里指定 routing key
-	))
+	), ackMode = "AUTO")
 	public void receiveTransferDoneMessage(@Payload String jsonMessage,
 			@Header(name = "UUID", required = false) String uuid,
 			@Header(name = "sendQueueName", required = false) String sendQueueName,
 			@Header(name = "sendExchangeName", required = false) String sendExchangeName)
-			throws URISyntaxException, JsonMappingException, JsonProcessingException {
-//		log.info(new String(message.getBody()));
-		// simulations
-		// convertAndSend(this.exchange, routingKey, message, messagePostProcessor,
-		// null);
+	{
 		try {
 			ObjectMapper objectMapper = new ObjectMapper();
 			objectMapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd"));
@@ -89,6 +85,7 @@ public class BigStockRabbitMqListener {
 			};
 			SingleStockPriceVo vo = bizService.getSingleStockPrice(singleStockPriceBizVo.getStockCode(),
 					singleStockPriceBizVo.getSearchDate());
+			
 			String voString = objectMapper.writeValueAsString(vo);
 			rabbitTemplate.convertAndSend(sendExchangeName, uuid, voString, messagePostProcessor,
 					new CorrelationData());
@@ -102,7 +99,7 @@ public class BigStockRabbitMqListener {
 	@RabbitListener(bindings = @QueueBinding(value = @Queue(value = "ShareholderStructureIncreaseQueue"), exchange = @Exchange(value = "ShareholderStructureIncreaseQueueExchange", type = ExchangeTypes.DIRECT), // 这里指定交换机类型为
 			// TOPIC
 			key = "ShareholderStructureIncreaseQueue" // 这里指定 routing key
-	))
+	), ackMode = "AUTO")
 	public void shareholderStructureIncreaseListener(@Payload String jsonMessage,
 			@Header(name = "UUID", required = false) String uuid,
 			@Header(name = "sendQueueName", required = false) String sendQueueName,
