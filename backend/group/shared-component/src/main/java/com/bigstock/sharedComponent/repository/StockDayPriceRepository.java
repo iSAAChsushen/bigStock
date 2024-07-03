@@ -2,14 +2,13 @@ package com.bigstock.sharedComponent.repository;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import com.bigstock.sharedComponent.entity.StockDayPrice;
-
-import jakarta.persistence.Column;
 
 public interface StockDayPriceRepository extends JpaRepository<StockDayPrice, StockDayPrice.StockDayPriceId> {
 
@@ -19,4 +18,5 @@ public interface StockDayPriceRepository extends JpaRepository<StockDayPrice, St
 	List<StockDayPrice> findThisWeekStockDayPrices(@Param("stockCode") String stockCode,
 			@Param("startOfWeekDate") Date startOfWeekDate, @Param("endOfWeekDate") Date endOfWeekDate);
 	
+	Optional<StockDayPrice> findByStockCodeAndTradingDay(String stockCode, Date tradingDay);
 }

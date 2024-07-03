@@ -3,10 +3,12 @@ package com.bigstock.schedule.service;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-
 import org.apache.commons.collections4.CollectionUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import com.bigstock.schedule.utils.ChromeDriverUtils;
@@ -14,7 +16,6 @@ import com.bigstock.sharedComponent.entity.ShareholderStructure;
 import com.bigstock.sharedComponent.entity.StockInfo;
 import com.bigstock.sharedComponent.service.ShareholderStructureService;
 
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -51,36 +52,50 @@ public class GraspShareholderStructureService {
 	private final ShareholderStructureService shareholderStructureService;
 
 	private final StockInfoService stockInfoService;
+	
+	private final RedissonClient redissonClient;
 
-	@PostConstruct
+//	@PostConstruct
 	// 每周日早上8点触发更新
-//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
+	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
 	public void updateShareholderStructure() {
 		// 先抓DB裡面全部的代號資料
 		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
 		allDataBaseStockCode.stream().forEach(stockCode -> {
+			boolean lockAcquired = false;
+			String lockKey = "lock:updateShareholderStructure:" + stockCode;
+			RLock lock = redissonClient.getLock(lockKey);
 			try {
-				log.info("begining sync stockCode {}",stockCode);
+				lockAcquired = lock.tryLock();
+				if (!lockAcquired) {
+					log.info("skip sync stockCode {}, because stockCode been occupied by other schedule", stockCode);
+					return;
+				}
+				log.info("begining sync stockCode {}", stockCode);
 				List<ShareholderStructure> ssList = shareholderStructureService
 						.getShareholderStructureByStockCodeDesc(stockCode);
 				if (!ssList.isEmpty()) {
 					ShareholderStructure lastesShareholderStructure = shareholderStructureService
 							.getShareholderStructureByStockCodeDesc(stockCode).get(0);
-					refreshStockLatestInfo(stockCode, lastesShareholderStructure.getStockName(),
-							syncStartDate);
+					refreshStockLatestInfo(stockCode, lastesShareholderStructure.getStockName(), syncStartDate);
 				} else {
 					Optional<StockInfo> stockInfoOp = stockInfoService.findById(stockCode);
 					if (stockInfoOp.isPresent()) {
 						log.info("ssList is empty : {}, so create data", stockCode);
 						refreshStockLatestInfo(stockCode, stockInfoOp.get().getStockName(), syncStartDate);
 					} else {
-						log.info(String.format("ssList is empty : %1s , and StockInfo is not exsits either", stockCode)   );
+						log.info(
+								String.format("ssList is empty : %1s , and StockInfo is not exsits either", stockCode));
 					}
 				}
 			} catch (InterruptedException e) {
 				log.error(e.getMessage(), e);
+			} finally {
+				if (lockAcquired) {
+					log.info("finsh sync stockCode {}", stockCode);
+					lock.unlock();
+				}
 			}
-			log.info("finsh sync stockCode {}",stockCode);
 		});
 	}
 
@@ -158,8 +173,8 @@ public class GraspShareholderStructureService {
 		return shareholderStructure;
 	}
 
-	@PostConstruct
-//	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
+//	@PostConstruct
+	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
 	public void updateStockInfo() throws InterruptedException {
 		List<StockInfo> stockInfos = ChromeDriverUtils
 				.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, overTheCounterUrl);

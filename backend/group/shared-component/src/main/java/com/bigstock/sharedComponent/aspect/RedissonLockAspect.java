@@ -50,7 +50,7 @@ public class RedissonLockAspect {
 		boolean lockAcquired = false;
 
 		try {
-			lockAcquired = lock.tryLock(10, 10, TimeUnit.MINUTES);
+			lockAcquired = lock.tryLock(10,TimeUnit.MINUTES);
 			if (lockAcquired) {
 				Cache cache = cacheManager.getCache(bacchusCacheableWithLock.value());
 				// Double-check if another thread has already populated the cache
