@@ -45,6 +45,9 @@ public class StockDayPrice {
 	
 	@Column(name = "end_of_week_date")
 	private Date endOfWeekDate;
+	
+	@Column(name = "change")
+	private String change;
 
 	@Getter
 	@Setter

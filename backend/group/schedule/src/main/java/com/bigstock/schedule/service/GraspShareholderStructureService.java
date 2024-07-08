@@ -1,21 +1,25 @@
 package com.bigstock.schedule.service;
 
+import java.net.URISyntaxException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.apache.commons.collections4.CollectionUtils;
-import org.redisson.api.RLock;
-import org.redisson.api.RedissonClient;
+
+import org.apache.commons.compress.utils.Lists;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 
 import com.bigstock.schedule.utils.ChromeDriverUtils;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
 import com.bigstock.sharedComponent.entity.StockInfo;
 import com.bigstock.sharedComponent.service.ShareholderStructureService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -38,8 +42,10 @@ public class GraspShareholderStructureService {
 	private String linuxChromeDriverPath;
 	@Value("${schedule.task.scheduling.cron.expression.sync-start-date}")
 	private String syncStartDate;
-	
-	
+
+	@Value("${schedule.tdcc-open-api}")
+	private String tdccOpenApi;
+
 //	@Value("${schedule.chromeDriverPath.linux.chrome-path}")
 //	private String linuxChromePath;
 
@@ -52,90 +58,42 @@ public class GraspShareholderStructureService {
 	private final ShareholderStructureService shareholderStructureService;
 
 	private final StockInfoService stockInfoService;
-	
-	private final RedissonClient redissonClient;
 
-//	@PostConstruct
+	@PostConstruct
 	// 每周日早上8点触发更新
 	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-shareholder-structure}")
-	public void updateShareholderStructure() {
+	public void updateShareholderStructure()
+			throws RestClientException, URISyntaxException, JsonMappingException, JsonProcessingException {
 		// 先抓DB裡面全部的代號資料
-		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
-		allDataBaseStockCode.stream().forEach(stockCode -> {
-			boolean lockAcquired = false;
-			String lockKey = "lock:updateShareholderStructure:" + stockCode;
-			RLock lock = redissonClient.getLock(lockKey);
+		List<Map<Integer, String>> stockCodeWeekInfos = ChromeDriverUtils
+				.graspShareholderStructureFromTDCCApi(tdccOpenApi);
+		List<ShareholderStructure> shareholderStructures = Lists.newArrayList();
+		stockCodeWeekInfos.stream().forEach(stockCodeWeekInfo -> {
+			String stockCode = stockCodeWeekInfo.get(37);
+			if (stockCode.equals("3686")) {
+				log.warn("");
+			}
 			try {
-				lockAcquired = lock.tryLock();
-				if (!lockAcquired) {
-					log.info("skip sync stockCode {}, because stockCode been occupied by other schedule", stockCode);
-					return;
-				}
-				log.info("begining sync stockCode {}", stockCode);
-				List<ShareholderStructure> ssList = shareholderStructureService
-						.getShareholderStructureByStockCodeDesc(stockCode);
-				if (!ssList.isEmpty()) {
-					ShareholderStructure lastesShareholderStructure = shareholderStructureService
-							.getShareholderStructureByStockCodeDesc(stockCode).get(0);
-					refreshStockLatestInfo(stockCode, lastesShareholderStructure.getStockName(), syncStartDate);
+				Optional<StockInfo> stockInfoOp = stockInfoService.findById(stockCode);
+				if (stockInfoOp.isPresent()) {
+					log.info("ssList is empty : {}, so create data", stockCode);
+					ShareholderStructure shareholderStructure = refreshStockLatestInfo(stockCode,
+							stockInfoOp.get().getStockName(), stockCodeWeekInfo);
+					shareholderStructures.add(shareholderStructure);
 				} else {
-					Optional<StockInfo> stockInfoOp = stockInfoService.findById(stockCode);
-					if (stockInfoOp.isPresent()) {
-						log.info("ssList is empty : {}, so create data", stockCode);
-						refreshStockLatestInfo(stockCode, stockInfoOp.get().getStockName(), syncStartDate);
-					} else {
-						log.info(
-								String.format("ssList is empty : %1s , and StockInfo is not exsits either", stockCode));
-					}
+					log.info(String.format("ssList is empty : %1s , and StockInfo is not exsits either", stockCode));
 				}
 			} catch (InterruptedException e) {
 				log.error(e.getMessage(), e);
-			} finally {
-				if (lockAcquired) {
-					log.info("finsh sync stockCode {}", stockCode);
-					lock.unlock();
-				}
 			}
 		});
+		shareholderStructureService.insert(shareholderStructures);
 	}
 
-//	private String convertToDate(String inputDate) {
-//		// 解析年份的后两位
-//		String year = "20" + inputDate.substring(0, 2);
-//
-//		// 解析周数和天数
-//		String mounth = inputDate.substring(2, 4);
-//		String day = inputDate.substring(5);
-//
-//		// 将日期格式化为字符串
-//		return year + mounth + day;
-//	}
-
-	private void refreshStockLatestInfo(String stockCode, String stockName, String latestCountDateStr)
-			throws InterruptedException {
-		List<Map<Integer, String>> weekInfos = ChromeDriverUtils.graspShareholderStructure(
-				windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, tdccQryStockUrl, stockCode,
-				latestCountDateStr);
-		if (CollectionUtils.isNotEmpty(weekInfos)) {
-			List<ShareholderStructure> shareholderStructures = weekInfos.stream().map(weekInfo -> {
-				return createShareholderStructure(weekInfo, stockCode, stockName);
-			}).toList();
-			shareholderStructureService.insert(shareholderStructures);
-		}
+	private ShareholderStructure refreshStockLatestInfo(String stockCode, String stockName,
+			Map<Integer, String> weekInfo) throws InterruptedException {
+		return createShareholderStructure(weekInfo, stockCode, stockName);
 	}
-
-//	private void clearCache(String stockCode) {
-		// 设置最大缓存大小
-//		RMapCache<String, RMapCache<String, ShareholderStructure>> outerMapCache = redissonClient
-//				.getMapCache("shareholderStructures");
-//
-//		// 尝试从缓存获取数据
-//		RMapCache<String, ShareholderStructure> innerMapCache = outerMapCache.get(stockCode);
-//		innerMapCache.delete();
-//		outerMapCache.remove(stockCode);
-//		// 插入最新的缓存数据
-//		sortedValues.stream()
-//	}
 
 	private ShareholderStructure createShareholderStructure(Map<Integer, String> weekInfo, String stockCode,
 			String stockName) {
@@ -165,6 +123,22 @@ public class GraspShareholderStructureService {
 			case 19 -> shareholderStructure.setBetweenEightHundredAndOneThousandBoardLot(value);
 			case 20 -> shareholderStructure.setOverOneThousandBoardLot(value);
 			case 21 -> shareholderStructure.setStockTotal(value);
+			case 22 -> shareholderStructure.setLessThanOneBoardLotPeople(value);
+			case 23 -> shareholderStructure.setBetweenOneAndFiveBoardLotPeople(value);
+			case 24 -> shareholderStructure.setBetweenFiveAndTenBoardLotPeople(value);
+			case 25 -> shareholderStructure.setBetweenTenAndFifteenBoardLotPeople(value);
+			case 26 -> shareholderStructure.setBetweenFifteenAndTwentyBoardLotPeople(value);
+			case 27 -> shareholderStructure.setBetweenTwentyAndThirtyBoardLotPeople(value);
+			case 28 -> shareholderStructure.setBetweenThirtyAndFortyBoardLotPeople(value);
+			case 29 -> shareholderStructure.setBetweenFortyAndFiftyBoardLotPeople(value);
+			case 30 -> shareholderStructure.setBetweenFiftyAndOneHundredBoardLotPeople(value);
+			case 31 -> shareholderStructure.setBetweenOneHundredAndTwoHundredBoardLotPeople(value);
+			case 32 -> shareholderStructure.setBetweenTwoHundredAndFourHundredBoardLotPeople(value);
+			case 33 -> shareholderStructure.setBetweenFourHundredAndSixHundredBoardLotPeople(value);
+			case 34 -> shareholderStructure.setBetweenSixHundredAndEightHundredBoardLotPeople(value);
+			case 35 -> shareholderStructure.setBetweenEightHundredAndOneThousandBoardLotPeople(value);
+			case 36 -> shareholderStructure.setOverOneThousandBoardLotPeople(value);
+			case 38 -> shareholderStructure.setTotalPeople(value);
 			}
 		});
 		shareholderStructure.setStockCode(stockCode);
@@ -173,11 +147,12 @@ public class GraspShareholderStructureService {
 		return shareholderStructure;
 	}
 
-//	@PostConstruct
+	@PostConstruct
 	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.update-stock-info}")
-	public void updateStockInfo() throws InterruptedException {
+	public void updateStockInfo() throws InterruptedException, JsonMappingException, RestClientException,
+			JsonProcessingException, URISyntaxException {
 		List<StockInfo> stockInfos = ChromeDriverUtils
-				.grepStockInfo(windowsActive ? windowsChromeDriverPath : linuxChromeDriverPath, overTheCounterUrl);
+				.getStockInfoByTdccApi("https://openapi.tdcc.com.tw/v1/opendata/1-2");
 		stockInfoService.insertAll(stockInfos);
 		log.info("finsh sync updateStockInfo ");
 	}

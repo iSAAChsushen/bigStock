@@ -1,46 +1,35 @@
 package com.bigstock.schedule.utils;
 
-import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.SimpleDateFormat;
-import java.time.Duration;
+import java.nio.charset.StandardCharsets;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import org.apache.commons.compress.utils.Lists;
-import org.apache.commons.lang3.StringUtils;
-import org.openqa.selenium.By;
-import org.openqa.selenium.JavascriptExecutor;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeDriverService;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.Select;
-import org.openqa.selenium.support.ui.WebDriverWait;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.bigstock.sharedComponent.entity.StockDayPrice;
 import com.bigstock.sharedComponent.entity.StockInfo;
-import com.google.common.collect.Maps;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -58,353 +47,304 @@ public class ChromeDriverUtils {
 		initializeColumnNames();
 	}
 
-	public static List<StockInfo> grepStockInfo(String chromeDriverPath,
-			String overTheCounterUrl) throws InterruptedException {
-		ChromeDriverService service = new ChromeDriverService.Builder()
-				.usingDriverExecutable(new File(chromeDriverPath)).usingAnyFreePort().build();
-		
-		List<StockInfo> stockInfos = Lists.newArrayList();
-		ChromeOptions options = new ChromeOptions();
-//		options.setBinary(linuxChromePath); // 指定Chrome的路徑
-		options.addArguments("--headless"); // 設定無頭模式
-		options.addArguments("--no-sandbox"); // 取消沙盒模式
-		options.addArguments("--disable-dev-shm-usage"); // 解決共享記憶體問題
-		WebDriver driver = new ChromeDriver(service, options);
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
-		try {
-			log.info("begining sync grepStockInfo ");
-			driver.get(overTheCounterUrl);
+//	public static List<StockInfo> grepStockInfo(String chromeDriverPath, String overTheCounterUrl)
+//			throws InterruptedException {
+//		ChromeDriverService service = new ChromeDriverService.Builder()
+//				.usingDriverExecutable(new File(chromeDriverPath)).usingAnyFreePort().build();
+//
+//		List<StockInfo> stockInfos = Lists.newArrayList();
+//		ChromeOptions options = new ChromeOptions();
+////		options.setBinary(linuxChromePath); // 指定Chrome的路徑
+//		options.addArguments("--headless"); // 設定無頭模式
+//		options.addArguments("--no-sandbox"); // 取消沙盒模式
+//		options.addArguments("--disable-dev-shm-usage"); // 解決共享記憶體問題
+//		WebDriver driver = new ChromeDriver(service, options);
+//		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(30));
+//		try {
+//			log.info("begining sync grepStockInfo ");
+//			driver.get(overTheCounterUrl);
+//
+//			Thread.sleep(4000);
+//			WebElement siiSelectElement = wait
+//					.until(ExpectedConditions.presenceOfElementLocated((By.cssSelector("tbody select[name='TYPEK']"))));
+//
+//			// 使用 Select 类初始化
+//			Select siiTypekSelect = new Select(siiSelectElement);
+//
+//			// 通过 value 属性设置选项值为 "otc"
+//			siiTypekSelect.selectByValue("sii");
+//			Thread.sleep(2000);
+//			WebElement siiCcodeSelectElement = wait
+//					.until(ExpectedConditions.presenceOfElementLocated((By.name("code"))));
+//
+//			// 使用 Select 类初始化
+//			Select siiCodeSelect = new Select(siiCcodeSelectElement);
+//
+//			// 通过可见文本选择空白选项
+//			siiCodeSelect.selectByVisibleText("");
+//
+//			WebElement siiSearchButton = wait.until(
+//					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
+//			siiSearchButton.click();
+//			Thread.sleep(2000);
+////			// 点击按钮
+////			searchButton.click();
+//			wait.until(ExpectedConditions
+//					.presenceOfElementLocated((By.xpath("//th[@class='tblHead' and contains(text(), '產業類別')]"))));
+//			JavascriptExecutor siijs = (JavascriptExecutor) driver;
+//			siijs.executeScript("window.scrollTo(0, document.body.scrollHeight);");
+//			List<WebElement> siiEvenAndOldRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+//					By.xpath("//tr[contains(@class, 'even') or contains(@class, 'odd')]")));
+//			for (WebElement webElement : siiEvenAndOldRows) {
+//				List<WebElement> cells = webElement.findElements(By.tagName("td"));
+//				StockInfo stockInfo = new StockInfo();
+//				stockInfo.setStockCode(cells.get(0).getText().trim());
+//				stockInfo.setStockName(cells.get(1).getText().trim());
+//				stockInfo.setStockType("1");
+//				stockInfos.add(stockInfo);
+//			}
+//
+//			driver.get(overTheCounterUrl);
+//			Thread.sleep(4000);
+//			WebElement otcSelectElement = wait
+//					.until(ExpectedConditions.presenceOfElementLocated((By.cssSelector("tbody select[name='TYPEK']"))));
+//
+//			// 使用 Select 类初始化
+//			Select otcTypekSelect = new Select(otcSelectElement);
+//
+//			// 通过 value 属性设置选项值为 "otc"
+//			otcTypekSelect.selectByValue("otc");
+//			Thread.sleep(2000);
+//			WebElement otcCcodeSelectElement = wait
+//					.until(ExpectedConditions.presenceOfElementLocated((By.name("code"))));
+//
+//			// 使用 Select 类初始化
+//			Select otcCodeSelect = new Select(otcCcodeSelectElement);
+//
+//			// 通过可见文本选择空白选项
+//			otcCodeSelect.selectByVisibleText("");
+//
+//			WebElement otcSearchButton = wait.until(
+//					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
+//			otcSearchButton.click();
+//			Thread.sleep(2000);
+////			// 点击按钮
+////			searchButton.click();
+//			wait.until(ExpectedConditions
+//					.presenceOfElementLocated((By.xpath("//th[@class='tblHead' and contains(text(), '產業類別')]"))));
+//			JavascriptExecutor js = (JavascriptExecutor) driver;
+//			js.executeScript("window.scrollTo(0, document.body.scrollHeight);");
+//			List<WebElement> evenAndOldRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
+//					By.xpath("//tr[contains(@class, 'even') or contains(@class, 'odd')]")));
+//			for (WebElement webElement : evenAndOldRows) {
+//				List<WebElement> cells = webElement.findElements(By.tagName("td"));
+//				StockInfo stockInfo = new StockInfo();
+//				stockInfo.setStockCode(cells.get(0).getText().trim());
+//				stockInfo.setStockName(cells.get(1).getText().trim());
+//				stockInfo.setStockType("0");
+//				stockInfos.add(stockInfo);
+//			}
+//		} catch (Exception e) {
+//			log.error(e.getMessage(), e);
+//		} finally {
+//			driver.quit();
+//			log.info("finshed add stockInfos ");
+//		}
+//		return stockInfos;
+//	}
 
-			Thread.sleep(4000);
-			WebElement siiSelectElement = wait
-					.until(ExpectedConditions.presenceOfElementLocated((By.cssSelector("tbody select[name='TYPEK']"))));
+	public static List<StockDayPrice> graspTwseDayPrice(String url, Date tradeDate) throws InterruptedException, JsonMappingException, JsonProcessingException, RestClientException, URISyntaxException {
+		String jsonResponse = fetchApiData(url);
 
-			// 使用 Select 类初始化
-			Select siiTypekSelect = new Select(siiSelectElement);
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> responseList = objectMapper.readValue(jsonResponse,
+				new TypeReference<List<Map<String, String>>>() {
+				}).stream().filter(data -> {
+					String code = data.get("Code").toString();
+					return code.length() < 5 && !code.matches(".*[a-zA-Z].*");
+				}).collect(Collectors.toList());
+		LocalDate today = tradeDate.toInstant()
+			      .atZone(ZoneId.systemDefault())
+			      .toLocalDate();
 
-			// 通过 value 属性设置选项值为 "otc"
-			siiTypekSelect.selectByValue("sii");
-			Thread.sleep(2000);
-			WebElement siiCcodeSelectElement = wait
-					.until(ExpectedConditions.presenceOfElementLocated((By.name("code"))));
+		// 設置本周第一天的日期
+		LocalDate startOfWeekLocalDate = today.with(DayOfWeek.MONDAY);
 
-			// 使用 Select 类初始化
-			Select siiCodeSelect = new Select(siiCcodeSelectElement);
+		// 設置本周最後一天的日期
+		LocalDate endOfWeekLocalDate = today.with(DayOfWeek.SUNDAY);
+		// 獲取系統默認時區
+		ZoneId zoneId = ZoneId.systemDefault();
 
-			// 通过可见文本选择空白选项
-			siiCodeSelect.selectByVisibleText("");
+		// 獲取偏移量
+		ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfWeekLocalDate.atStartOfDay());
 
-			WebElement siiSearchButton = wait.until(
-					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
-			siiSearchButton.click();
-			Thread.sleep(2000);
-//			// 点击按钮
-//			searchButton.click();
-			wait.until(ExpectedConditions
-					.presenceOfElementLocated((By.xpath("//th[@class='tblHead' and contains(text(), '產業類別')]"))));
-			JavascriptExecutor siijs = (JavascriptExecutor) driver;
-			siijs.executeScript("window.scrollTo(0, document.body.scrollHeight);");
-			List<WebElement> siiEvenAndOldRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-					By.xpath("//tr[contains(@class, 'even') or contains(@class, 'odd')]")));
-			for (WebElement webElement : siiEvenAndOldRows) {
-				List<WebElement> cells = webElement.findElements(By.tagName("td"));
-				StockInfo stockInfo = new StockInfo();
-				stockInfo.setStockCode(cells.get(0).getText().trim());
-				stockInfo.setStockName(cells.get(1).getText().trim());
-				stockInfo.setStockType("1");
-				stockInfos.add(stockInfo);
-			}
+		// 將 LocalDate 轉換為 Date
+		Date startOfWeeDate = Date.from(startOfWeekLocalDate.atStartOfDay().toInstant(zoneOffset));
+		Date endOfWeekDate = Date.from(endOfWeekLocalDate.atStartOfDay().toInstant(zoneOffset));
 
-			driver.get(overTheCounterUrl);
-			Thread.sleep(4000);
-			WebElement otcSelectElement = wait
-					.until(ExpectedConditions.presenceOfElementLocated((By.cssSelector("tbody select[name='TYPEK']"))));
-
-			// 使用 Select 类初始化
-			Select otcTypekSelect = new Select(otcSelectElement);
-
-			// 通过 value 属性设置选项值为 "otc"
-			otcTypekSelect.selectByValue("otc");
-			Thread.sleep(2000);
-			WebElement otcCcodeSelectElement = wait
-					.until(ExpectedConditions.presenceOfElementLocated((By.name("code"))));
-
-			// 使用 Select 类初始化
-			Select otcCodeSelect = new Select(otcCcodeSelectElement);
-
-			// 通过可见文本选择空白选项
-			otcCodeSelect.selectByVisibleText("");
-
-			WebElement otcSearchButton = wait.until(
-					ExpectedConditions.presenceOfElementLocated((By.cssSelector("div.search input[type='button']"))));
-			otcSearchButton.click();
-			Thread.sleep(2000);
-//			// 点击按钮
-//			searchButton.click();
-			wait.until(ExpectedConditions
-					.presenceOfElementLocated((By.xpath("//th[@class='tblHead' and contains(text(), '產業類別')]"))));
-			JavascriptExecutor js = (JavascriptExecutor) driver;
-			js.executeScript("window.scrollTo(0, document.body.scrollHeight);");
-			List<WebElement> evenAndOldRows = wait.until(ExpectedConditions.presenceOfAllElementsLocatedBy(
-					By.xpath("//tr[contains(@class, 'even') or contains(@class, 'odd')]")));
-			for (WebElement webElement : evenAndOldRows) {
-				List<WebElement> cells = webElement.findElements(By.tagName("td"));
-				StockInfo stockInfo = new StockInfo();
-				stockInfo.setStockCode(cells.get(0).getText().trim());
-				stockInfo.setStockName(cells.get(1).getText().trim());
-				stockInfo.setStockType("0");
-				stockInfos.add(stockInfo);
-			}
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-		} finally {
-			driver.quit();
-			log.info("finshed add stockInfos ");
-		}
-		return stockInfos;
+		return responseList.stream().map(map -> {
+			StockDayPrice stockDayPrice = new StockDayPrice();
+			stockDayPrice.setStockCode(map.get("Code"));
+			stockDayPrice.setOpeningPrice(map.get("OpeningPrice"));
+			stockDayPrice.setClosingPrice(map.get("ClosingPrice"));
+			stockDayPrice.setHighPrice(map.get("HighestPrice"));
+			stockDayPrice.setLowPrice(map.get("LowestPrice"));
+			stockDayPrice.setChange(map.get("Change").replace("+", ""));
+			stockDayPrice.setTradingDay(tradeDate);
+			stockDayPrice.setStartOfWeekDate(startOfWeeDate);
+			stockDayPrice.setEndOfWeekDate(endOfWeekDate);
+			return stockDayPrice;
+		}).toList();
 	}
 
-	public static List<Map<Integer, String>> graspShareholderStructure(String chromeDriverPath,
-			String tdccQryStockUrl, String stockCode, String latestCountDateStr) throws InterruptedException {
 
-		List<Map<Integer, String>> weekInfo = new ArrayList<>();
+	public static List<StockDayPrice> graspTpexDayPrice(String url) throws InterruptedException, JsonMappingException, JsonProcessingException, RestClientException, URISyntaxException {
+		String jsonResponse = fetchApiData("https://www.tpex.org.tw/openapi/v1/tpex_mainboard_quotes");
 
-		ChromeDriverService service = new ChromeDriverService.Builder()
-				.usingDriverExecutable(new File(chromeDriverPath)).usingAnyFreePort().build();
-		ChromeOptions options = new ChromeOptions();
-//		options.setBinary(linuxChromePath); // 指定Chrome的路徑
-		options.addArguments("--headless"); // 設定無頭模式
-		options.addArguments("--no-sandbox"); // 取消沙盒模式
-		options.addArguments("--disable-dev-shm-usage"); // 解決共享記憶體問題
-		WebDriver driver = new ChromeDriver(service, options);
-		WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
-		try {
-			driver.get(tdccQryStockUrl);
-			Select dates = new Select(wait.until(ExpectedConditions.presenceOfElementLocated(By.id("scaDate"))));
-			List<String> tdccSelectoptions = dates.getOptions().stream().map(WebElement::getText).toList();
-			DateTimeFormatter lastestDateformatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> responseList = objectMapper.readValue(jsonResponse,
+				new TypeReference<List<Map<String, String>>>() {
+				}).stream().filter(data -> {
+					String code = data.get("SecuritiesCompanyCode").toString();
+					return code.length() < 5 && !code.matches(".*[a-zA-Z].*");
+				}).collect(Collectors.toList());
+		
 
-			LocalDate latestCountDate = LocalDate.parse(latestCountDateStr, lastestDateformatter);
-			for (String tdccSelectoption : tdccSelectoptions) {
-				LocalDate selectDate = LocalDate.parse(tdccSelectoption, lastestDateformatter);
+		return responseList.stream().map(map -> {
+			// 指定日期字符串格式
+			DateTimeFormatter dateStringformatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
 
-				if (selectDate.compareTo(latestCountDate) <= 0) {
-					break;
+			String monthAndDate = map.get("Date").substring(map.get("Date").length() - 4);
+			int year = Integer.parseInt(map.get("Date").replace(monthAndDate, "")) + 1911; // 民国转换为西元
+			String standardDateString = year + "/" + monthAndDate.substring(0, 2) + "/" + monthAndDate.substring(2, 4);
+
+			// 解析标准日期字符串为 LocalDate 对象
+			LocalDate localDate = LocalDate.parse(standardDateString, dateStringformatter);
+			Date date = Date.from(localDate.atStartOfDay().atZone(ZoneId.systemDefault()).toInstant());
+			LocalDate today = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+			// 設置本周第一天的日期
+			LocalDate startOfWeekLocalDate = today.with(DayOfWeek.MONDAY);
+
+			// 設置本周最後一天的日期
+			LocalDate endOfWeekLocalDate = today.with(DayOfWeek.SUNDAY);
+			// 獲取系統默認時區
+			ZoneId zoneId = ZoneId.systemDefault();
+
+			// 獲取偏移量
+			ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfWeekLocalDate.atStartOfDay());
+
+			// 將 LocalDate 轉換為 Date
+			Date startOfWeeDate = Date.from(startOfWeekLocalDate.atStartOfDay().toInstant(zoneOffset));
+			Date endOfWeekDate = Date.from(endOfWeekLocalDate.atStartOfDay().toInstant(zoneOffset));
+			StockDayPrice stockDayPrice = new StockDayPrice();
+			stockDayPrice.setStockCode(map.get("SecuritiesCompanyCode"));
+			stockDayPrice.setOpeningPrice(map.get("Open"));
+			stockDayPrice.setClosingPrice(map.get("Close"));
+			stockDayPrice.setHighPrice(map.get("High"));
+			stockDayPrice.setLowPrice(map.get("Low"));
+			stockDayPrice.setChange(map.get("Change"));
+			stockDayPrice.setTradingDay(new Date());
+			stockDayPrice.setTradingDay(date);
+			stockDayPrice.setStartOfWeekDate(startOfWeeDate);
+			stockDayPrice.setEndOfWeekDate(endOfWeekDate);
+			return stockDayPrice;
+		}).toList();
+	}
+
+	
+
+	public static List<Map<Integer, String>> graspShareholderStructureFromTDCCApi(String tdccOpenApiUrl)
+			throws JsonMappingException, JsonProcessingException, RestClientException, URISyntaxException {
+		String jsonResponse = fetchApiData(tdccOpenApiUrl);
+
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> responseList = objectMapper
+				.readValue(jsonResponse, new TypeReference<List<Map<String, String>>>() {
+				}).stream().filter(data -> {
+					String code = data.get("證券代號").toString();
+					return code.length() < 5 && !code.matches(".*[a-zA-Z].*");
+				}).collect(Collectors.toList());
+
+		Map<String, List<Map<String, String>>> groupResponseMap = new HashMap<>();
+		for (Map<String, String> response : responseList) {
+			groupResponseMap.computeIfAbsent(response.get("證券代號"), k -> new ArrayList<>()).add(response);
+		}
+
+		return groupResponseMap.entrySet().stream().map(set -> {
+			List<Map<String, String>> innerList = set.getValue();
+			Map<String, String> map = innerList.stream().findFirst().orElse(new HashMap<>());
+			String date = map.get("﻿資料日期");
+			String stockCode = map.get("證券代號");
+			LocalDate localDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("yyyyMMdd"));
+			Integer weeksOfYear = localDate.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
+			String weeksOfYearString = localDate.getYear() + "W" + weeksOfYear;
+			String countDate = localDate.getMonthValue() + "/" + localDate.getDayOfMonth();
+			Map<Integer, String> innerMap = new HashMap<>();
+			innerMap.put(0, weeksOfYearString);
+			innerMap.put(1, countDate);
+			for (int index = 0; index < innerList.size(); index++) {
+				Map<String, String> data = innerList.get(index);
+				if (index <= 16) {
+					innerMap.put((index < 16 ? index + 6 : index + 5), data.get("股數"));
 				}
+				innerMap.put(index + 22, data.get("人數"));
+			}
+			innerMap.put(37, stockCode);
+			return innerMap;
+		}).collect(Collectors.toList());
+	}
 
-				driver.get("https://www.tdcc.com.tw/portal/zh/smWeb/qryStock");
-				wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("scaDate")));
-				Select innerDates = new Select(driver.findElement(By.id("scaDate")));
-				Optional<WebElement> tdccSelectoptionOp = innerDates.getOptions().stream()
-						.filter(webElement -> webElement.getText().contains(tdccSelectoption)).findFirst();
-				tdccSelectoptionOp.get().click();
-				LocalDate tdccSelectoptionLd = LocalDate.from(lastestDateformatter.parse(tdccSelectoption));
-				int month = tdccSelectoptionLd.getMonthValue();
-				WebElement stockInput = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("StockNo")));
-				stockInput.clear();
-				stockInput.sendKeys(stockCode);
-				WebElement searchButton = wait.until(ExpectedConditions
-						.presenceOfElementLocated(By.xpath("//input[@type='submit' and @value='查詢']")));
-				searchButton.click();
-				WebElement tbodyElement = wait.until(ExpectedConditions
-						.visibilityOfElementLocated(By.cssSelector(".table-frame.securities-overview.m-t-20 tbody")));
+	public static List<StockInfo> getStockInfoByTdccApi(String tdccOpenApiUrl)
+			throws RestClientException, URISyntaxException, JsonMappingException, JsonProcessingException {
+		String jsonResponse = fetchApiData(tdccOpenApiUrl);
 
-				boolean isTextPresent = driver.getPageSource().contains("查無此資料");
-				if (isTextPresent && !weekInfo.isEmpty()) {
-					break;
-				}
-				int grabSize = 16;
-				Map<Integer, String> week = new HashMap<>();
-				List<WebElement> rows = tbodyElement.findElements(By.tagName("tr"));
-
-				for (int index = 0; index < grabSize; index++) {
-					WebElement row = rows.get(index);
-					List<WebElement> cells = row.findElements(By.tagName("td"));
-					week.put(index + 6, cells.get(3).getText());
-				}
-
-				Thread.sleep(400);
-				driver.get("https://stock.wearn.com/cdata.asp");
-				Thread.sleep(400);
-
-				Select yearSelect = new Select(
-						wait.until(ExpectedConditions.presenceOfElementLocated(By.name("year"))));
-				LocalDate rocDate = tdccSelectoptionLd.minusYears(1911);
-				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyy/MM/dd");
-				String rocDateString = rocDate.format(formatter);
-				yearSelect.selectByValue(rocDateString.split("/")[0]);
-				WebElement selectElement = wait.until(ExpectedConditions.presenceOfElementLocated(By.name("month")));
-				Select monthSelect = new Select(selectElement);
-				monthSelect.selectByValue(StringUtils.leftPad(String.valueOf(month), 2, "0"));
-				Thread.sleep(200);
-				WebElement stockNoInput = wait.until(ExpectedConditions
-						.presenceOfElementLocated(By.xpath("//input[@name='kind' and @maxlength='6' and @size='8']")));
-				stockNoInput.sendKeys(stockCode);
-				Thread.sleep(1000);
-				WebElement element = wait.until(ExpectedConditions.presenceOfElementLocated(
-						By.xpath("//input[@type='SUBMIT' and @value='搜尋' and contains(@class, 'id1')]")));
-				element.click();
-
-				WebElement tableElement = wait
-						.until(ExpectedConditions.presenceOfElementLocated((By.cssSelector("table.mobile_img"))));
-				WebElement pricetbodyElement = tableElement.findElement(By.xpath("./tbody"));
-				Thread.sleep(500);
-				List<WebElement> twseRows = pricetbodyElement.findElements(By.tagName("tr"));
-
-				if (twseRows.isEmpty()) {
-					continue;
-				}
-
-				List<WebElement> elements = driver
-						.findElements(By.xpath("//td[@colspan='6' and contains(text(),'對不起您輸入的日期資料有錯誤喔。')]"));
-				if (!elements.isEmpty()) {
-					break;
-				}
-
-				Map<String, String> dateAndPrice = new HashMap<>();
-
-				for (int index = 2; index < twseRows.size(); index++) {
-					List<WebElement> cells = twseRows.get(index).findElements(By.tagName("td"));
-					LocalDate date = LocalDate.parse(cells.get(0).getText(), formatter);
-					dateAndPrice.put(date.format(formatter), cells.get(4).getText().trim());
-				}
-
-				LocalDate closestDate = null;
-				long closestDuration = Long.MAX_VALUE;
-
-				for (String dateString : dateAndPrice.keySet()) {
-					// 指定日期字符串格式
-					DateTimeFormatter dateStringformatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-
-					// 将民国日期转换为西元日期
-					String[] parts = dateString.split("/");
-					int year = Integer.parseInt(parts[0]) + 1911; // 民国转换为西元
-					String standardDateString = year + "/" + parts[1] + "/" + parts[2];
-
-					// 解析标准日期字符串为 LocalDate 对象
-					LocalDate date = LocalDate.parse(standardDateString, dateStringformatter);
-					long duration = Math.abs(selectDate.until(date).getDays());
-
-					if (duration < closestDuration) {
-						closestDuration = duration;
-						closestDate = date;
-					}
-				}
-
-				String monthStr = StringUtils.leftPad(String.valueOf(tdccSelectoptionLd.getMonthValue()), 2, "0");
-				String dateStr = StringUtils.leftPad(String.valueOf(tdccSelectoptionLd.getDayOfMonth()), 2, "0");
-				int weekOfYear = closestDate.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR);
-				String weekOfYearString = StringUtils.leftPad(String.valueOf(weekOfYear), 2, "0");
-				int year = closestDate.getYear();
-				DateTimeFormatter acformatter = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-				week.put(1, monthStr + "/" + dateStr);
-				week.put(2, dateAndPrice.get(closestDate.format(acformatter)));
-				week.put(0, year + "W" + weekOfYearString);
-
-				SHAREHOLDER_STRUCTURE_COLUMN_NAME.entrySet().stream().forEach(entry -> {
-					if (!week.containsKey(entry.getKey())) {
-						week.put(entry.getKey(), "-");
-					}
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, Object>> responseList = objectMapper.readValue(jsonResponse,
+				new TypeReference<List<Map<String, Object>>>() {
 				});
 
-				weekInfo.add(week);
-				Thread.sleep(500);
+		return responseList.stream().filter(data -> {
+			String code = data.get("證券代號").toString();
+			String market = data.get("市場別").toString();
+			return code.length() < 5 && !code.matches(".*[a-zA-Z].*") && !market.contains("（終止上市(櫃)、興櫃)");
+		}).map(data -> {
+			StockInfo stockInfo = new StockInfo();
+			String name = decodeHtmlEntities(data.get("證券名稱").toString());
+			stockInfo.setStockCode(data.get("證券代號").toString());
+			stockInfo.setStockName(name);
+			String marketType = data.get("市場別").toString();
+			if ("上市".equals(marketType)) {
+				stockInfo.setStockType("1");
+			} else if ("上櫃".equals(marketType)) {
+				stockInfo.setStockType("0");
+			} else if ("興櫃".equals(marketType)) {
+				stockInfo.setStockType("2");
 			}
-		} catch (Exception e) {
-			log.error(e.getMessage(), e);
-		} finally {
-
-			driver.quit();
-		}
-
-		return weekInfo;
+			return stockInfo;
+		}).collect(Collectors.toList());
 	}
 
-	/**
-	 * 抓上市上櫃的當日收盤、開盤、最高、最低價格
-	 * 
-	 * @param chromeDriverPath
-	 * @param stockTWSEPriceUrl
-	 * @param stockTPEXPriceUrl
-	 * @return
-	 * @throws RestClientException
-	 * @throws URISyntaxException
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static List<Map<String, String>> graspStockPrice(String stockTWSEPriceUrl, String stockTPEXPriceUrl, List<String> allDataBaseStockCode)
-			throws RestClientException, URISyntaxException {
-		List<Map<String, String>> stockCodePriceWithEveryWeekInfo = Lists.newArrayList();
-		Date oridate = new Date();
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(oridate);
-		for (int minusday = 0; minusday < 1; minusday++) {
-//			calendar.add(Calendar.DAY_OF_MONTH, -1);
-			Date date = calendar.getTime();
-			// 将java.util.Date转换为java.time.LocalDate
-			LocalDate localDate = date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-			String ACDateString = new SimpleDateFormat("yyyyMMdd").format(date);
-			for (String type : TWSE_TYPE_LIST) {
+	private static String fetchApiData(String url) throws URISyntaxException, RestClientException {
+		RestTemplate restTemplate = new RestTemplate();
+		restTemplate.getMessageConverters().stream()
+				.filter(converter -> converter instanceof org.springframework.http.converter.StringHttpMessageConverter)
+				.forEach(converter -> ((org.springframework.http.converter.StringHttpMessageConverter) converter)
+						.setDefaultCharset(StandardCharsets.UTF_8));
+		ResponseEntity<String> responseEntity = restTemplate.exchange(new URI(url), HttpMethod.GET, null, String.class);
+		return responseEntity.getBody();
+	}
 
-				MultiValueMap<String, Object> multipartMap = new LinkedMultiValueMap<>();
-				multipartMap.add("response", "json");
-				multipartMap.add("date", ACDateString);
-				multipartMap.add("type", type);
-				HttpEntity<MultiValueMap<String, Object>> request = new HttpEntity<>(multipartMap);
-
-				RestTemplate teseRestTeplate = new RestTemplate();
-				ResponseEntity<Map> responseEntity = teseRestTeplate.exchange(new URI(stockTWSEPriceUrl),
-						HttpMethod.POST, request, Map.class);
-				Map<String, Object> result = responseEntity.getBody();
-				if (result.get("data1") != null) {
-					List<List<String>> thisDateStockCodePriceInfo = (List<List<String>>) result.get("data1");
-					List<Map<String, String>> TWSEList = thisDateStockCodePriceInfo.stream().map(list -> {
-						Map<String, String> stockPriceInfo = Maps.newHashMap();
-						stockPriceInfo.put("stock_code", list.get(0));
-						stockPriceInfo.put("trading_day", ACDateString);
-						stockPriceInfo.put("opening_price", list.get(5));
-						stockPriceInfo.put("closing_price", list.get(8));
-						stockPriceInfo.put("high_price", list.get(6));
-						stockPriceInfo.put("low_price", list.get(7));
-						return stockPriceInfo;
-					}).toList();
-					stockCodePriceWithEveryWeekInfo.addAll(TWSEList);
-				}
-			}
-
-			int yearAD = localDate.getYear();
-			int month = localDate.getMonthValue();
-			int day = localDate.getDayOfMonth();
-
-			// 西元年份转换为民国年份（民国年份 = 西元年份 - 1911）
-			int yearROC = yearAD - 1911;
-
-			// 如果月份大于 9，则不补零，否则补零
-			String formattedMonth = month > 9 ? String.valueOf(month) : String.format("%02d", month);
-			String formattedDay = day > 9 ? String.valueOf(day) : String.format("%02d", day);
-			String currentstockTPEXPriceUrl = stockTPEXPriceUrl.replace("{dateString}",
-					String.join("/", String.valueOf(yearROC), formattedMonth, formattedDay));
-			RestTemplate TPEXRestTeplate = new RestTemplate();
-			ResponseEntity<Map> TPEXResponseEntity = TPEXRestTeplate.exchange(new URI(currentstockTPEXPriceUrl),
-					HttpMethod.POST, null, Map.class);
-			Map<String, Object> TPEXresult = TPEXResponseEntity.getBody();
-			if (!((List) TPEXresult.get("aaData")).isEmpty()) {
-				List<List<String>> thisDateStockCodePriceInfo = (List<List<String>>) TPEXresult.get("aaData");
-				List<Map<String, String>> TPEXList = thisDateStockCodePriceInfo.stream()
-						.filter(list -> allDataBaseStockCode.contains(list.get(0))).map(list -> {
-							Map<String, String> stockPriceInfo = Maps.newHashMap();
-							stockPriceInfo.put("stock_code", list.get(0));
-							stockPriceInfo.put("trading_day", ACDateString);
-							stockPriceInfo.put("opening_price", list.get(4));
-							stockPriceInfo.put("closing_price", list.get(2));
-							stockPriceInfo.put("high_price", list.get(5));
-							stockPriceInfo.put("low_price", list.get(6));
-							return stockPriceInfo;
-						}).toList();
-				stockCodePriceWithEveryWeekInfo.addAll(TPEXList);
-			}
-
+	private static String decodeHtmlEntities(String input) {
+		Pattern pattern = Pattern.compile("&#(\\d+);");
+		Matcher matcher = pattern.matcher(input);
+		StringBuilder decodedString = new StringBuilder();
+		while (matcher.find()) {
+			int codePoint = Integer.parseInt(matcher.group(1));
+			matcher.appendReplacement(decodedString, new String(Character.toChars(codePoint)));
 		}
-		return stockCodePriceWithEveryWeekInfo;
+		matcher.appendTail(decodedString);
+		return decodedString.toString();
 	}
 
 	private static void initializeColumnNames() {
@@ -430,7 +370,23 @@ public class ChromeDriverUtils {
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(19, ">800張≦1千張");
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(20, ">1千張");
 		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(21, "總計");
-
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(22, "<1張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(23, "≧1張≦5張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(24, ">5張≦10張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(25, ">10張≦15張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(26, ">15張≦20張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(27, ">20張≦30張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(28, ">30張≦40張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(29, ">40張≦50張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(30, ">50張≦100張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(31, ">100張≦200張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(32, ">200張≦400張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(33, ">400張≦600張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(34, ">600張≦800張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(35, ">800張≦1千張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(36, ">1千張人數");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(37, "股票代號");
+		SHAREHOLDER_STRUCTURE_COLUMN_NAME.put(38, "持股總人數");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(0, "stock_code");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(1, "trading_day");
 		STOCK_DAY_PRICE_COLUMN_NAME.put(2, "opening_price");

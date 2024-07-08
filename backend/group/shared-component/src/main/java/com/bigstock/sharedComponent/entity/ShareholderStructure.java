@@ -1,7 +1,5 @@
 package com.bigstock.sharedComponent.entity;
 
-import java.math.BigInteger;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
@@ -20,10 +18,10 @@ public class ShareholderStructure {
 
 	@Column(name = "stock_code")
 	private String stockCode;
-	
+
 	@Column(name = "stock_name")
 	private String stockName;
-	
+
 	@Column(name = "week_of_year")
 	private String weekOfYear;
 
@@ -86,7 +84,55 @@ public class ShareholderStructure {
 
 	@Column(name = "over_1000_board_lot")
 	private String overOneThousandBoardLot;
-	
+
 	@Column(name = "stock_total")
 	private String stockTotal;
+
+	@Column(name = "less_1_board_lot_people")
+	private String lessThanOneBoardLotPeople;
+
+	@Column(name = "between_1_and_5_board_lot_people")
+	private String betweenOneAndFiveBoardLotPeople;
+
+	@Column(name = "between_5_and_10_board_lot_people")
+	private String betweenFiveAndTenBoardLotPeople;
+
+	@Column(name = "between_10_and_15_board_lot_people")
+	private String betweenTenAndFifteenBoardLotPeople;
+
+	@Column(name = "between_15_and_20_board_lot_people")
+	private String betweenFifteenAndTwentyBoardLotPeople;
+
+	@Column(name = "between_20_and_30_board_lot_people")
+	private String betweenTwentyAndThirtyBoardLotPeople;
+
+	@Column(name = "between_30_and_40_board_lot_people")
+	private String betweenThirtyAndFortyBoardLotPeople;
+
+	@Column(name = "between_40_and_50_board_lot_people")
+	private String betweenFortyAndFiftyBoardLotPeople;
+
+	@Column(name = "between_50_and_100_board_lot_people")
+	private String betweenFiftyAndOneHundredBoardLotPeople;
+
+	@Column(name = "between_100_and_200_board_lot_people")
+	private String betweenOneHundredAndTwoHundredBoardLotPeople;
+
+	@Column(name = "between_200_and_400_board_lot_people")
+	private String betweenTwoHundredAndFourHundredBoardLotPeople;
+
+	@Column(name = "between_400_and_600_board_lot_people")
+	private String betweenFourHundredAndSixHundredBoardLotPeople;
+
+	@Column(name = "between_600_and_800_board_lot_people")
+	private String betweenSixHundredAndEightHundredBoardLotPeople;
+
+	@Column(name = "between_800_and_1000_board_lot_people")
+	private String betweenEightHundredAndOneThousandBoardLotPeople;
+
+	@Column(name = "over_1000_board_lot_people")
+	private String overOneThousandBoardLotPeople;
+	
+	@Column(name = "total_people")
+	private String totalPeople;
 }

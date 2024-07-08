@@ -1,18 +1,9 @@
 package com.bigstock.schedule.service;
 
 import java.net.URISyntaxException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.DayOfWeek;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -22,7 +13,10 @@ import org.springframework.web.client.RestClientException;
 import com.bigstock.schedule.utils.ChromeDriverUtils;
 import com.bigstock.sharedComponent.entity.StockDayPrice;
 import com.bigstock.sharedComponent.service.StockDayPriceService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,56 +46,19 @@ public class GraspStockPrice {
 	@Value("${schedule.stock-price.url.twse}")
 	private String stockPriceTWSEUrl;
 
-	private final StockInfoService stockInfoService;
-
 	private final StockDayPriceService stockDayPriceService;
 
-//	@PostConstruct
+	@PostConstruct
 	// 每周日早上8点触发更新
 	@Scheduled(cron = "${schedule.task.scheduling.cron.expression.grasp-stock-price}")
-	public void updateShareholderStructure() throws RestClientException, URISyntaxException {
+	public void updateShareholderStructure() throws RestClientException, URISyntaxException, JsonMappingException, JsonProcessingException, InterruptedException {
 		// 先抓DB裡面全部的代號資料
-		List<String> allDataBaseStockCode = stockInfoService.getAllStockCode();
-		List<StockDayPrice> stockDayPrices = ChromeDriverUtils
-				.graspStockPrice(stockPriceTWSEUrl, stockPriceTPEXUrl, allDataBaseStockCode)
-				.stream().filter(map -> StringUtils.isNotBlank(map.get("stock_code"))).map(map -> {
-					StockDayPrice stockDayPrice = new StockDayPrice();
-					try {
-						log.info("begining sync stockDayPrice stockCode {}",map.get("stock_code"));
-						LocalDate today = Instant.ofEpochMilli(new SimpleDateFormat("yyyyMMdd").parse(map.get("trading_day")).getTime())
-							      .atZone(ZoneId.systemDefault())
-							      .toLocalDate();
-						
-						// 設置本周第一天的日期
-						LocalDate startOfWeekLocalDate = today.with(DayOfWeek.MONDAY);
-
-						// 設置本周最後一天的日期
-						LocalDate endOfWeekLocalDate = today.with(DayOfWeek.SUNDAY);
-						// 獲取系統默認時區
-						ZoneId zoneId = ZoneId.systemDefault();
-
-						// 獲取偏移量
-						ZoneOffset zoneOffset = zoneId.getRules().getOffset(startOfWeekLocalDate.atStartOfDay());
-
-						// 將 LocalDate 轉換為 Date
-						Date startOfWeeDate = Date.from(startOfWeekLocalDate.atStartOfDay().toInstant(zoneOffset));
-						Date endOfWeekDate = Date.from(endOfWeekLocalDate.atStartOfDay().toInstant(zoneOffset));
-						stockDayPrice.setStockCode(map.get("stock_code"));
-						stockDayPrice.setOpeningPrice(map.get("opening_price"));
-						stockDayPrice.setClosingPrice(map.get("closing_price"));
-						stockDayPrice.setHighPrice(map.get("high_price"));
-						stockDayPrice.setLowPrice(map.get("low_price"));
-						stockDayPrice.setTradingDay(new SimpleDateFormat("yyyyMMdd").parse(map.get("trading_day")));
-						stockDayPrice.setStartOfWeekDate(startOfWeeDate);
-						stockDayPrice.setEndOfWeekDate(endOfWeekDate);
-					} catch (ParseException e) {
-						// TODO Auto-generated catch block
-						log.error(e.getMessage(), e);
-						return null;
-					}
-					return stockDayPrice;
-				}).filter(stockDayPrice -> Optional.ofNullable(stockDayPrice).isPresent()).toList();
-		stockDayPriceService.saveAll(stockDayPrices);
+		List<StockDayPrice> stockTpexDayPrices = ChromeDriverUtils.graspTpexDayPrice("https://www.tpex.org.tw/openapi/v1/tpex_mainboard_quotes");
+		
+		Date tradeDate = stockTpexDayPrices.stream().findFirst().get().getTradingDay();
+		List<StockDayPrice> stockTwseDayPrices =  ChromeDriverUtils.graspTwseDayPrice("https://openapi.twse.com.tw/v1/exchangeReport/STOCK_DAY_ALL",tradeDate);
+		stockDayPriceService.saveAll(stockTpexDayPrices);
+		stockDayPriceService.saveAll(stockTwseDayPrices);
 		log.info("finsh sync stockDayPrice");
 	}
 }
