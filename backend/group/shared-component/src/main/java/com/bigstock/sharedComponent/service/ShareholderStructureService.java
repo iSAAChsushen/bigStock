@@ -1,5 +1,6 @@
 package com.bigstock.sharedComponent.service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -10,7 +11,9 @@ import org.springframework.stereotype.Service;
 
 import com.bigstock.sharedComponent.annotation.BacchusCacheableWithLock;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
+import com.bigstock.sharedComponent.entity.StockDayPrice;
 import com.bigstock.sharedComponent.repository.ShareholderStructureRepository;
+import com.bigstock.sharedComponent.repository.StockDayPriceRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -19,7 +22,7 @@ import lombok.RequiredArgsConstructor;
 public class ShareholderStructureService {
 	private final ShareholderStructureRepository shareholderStructureRepository;
 
-	private final RedissonCacheService redissonCacheService;
+	private final StockDayPriceRepository stockDayPriceRepository;
 
 	public List<ShareholderStructure> getAll() {
 		return shareholderStructureRepository.findAll();
@@ -58,7 +61,8 @@ public class ShareholderStructureService {
 	public List<ShareholderStructure> getShareholderStructureLastTwoWeeks(String firstWeekOfYear,
 			String secondWeekOfYear, String thirdWeekOfYear) {
 
-		return getSelf().getShareholderStructureLastTwoWeeksWithDataBase(firstWeekOfYear, secondWeekOfYear, thirdWeekOfYear);
+		return getSelf().getShareholderStructureLastTwoWeeksWithDataBase(firstWeekOfYear, secondWeekOfYear,
+				thirdWeekOfYear);
 	}
 
 	@Cacheable(value = "longLivedCache", key = "#stockCode")
@@ -78,14 +82,30 @@ public class ShareholderStructureService {
 	@BacchusCacheableWithLock(value = "longLivedCache", key = "#p0 + '-' + #p1 + '-' + #p2")
 	public List<ShareholderStructure> getShareholderStructureLastTwoWeeksWithDataBase(String firstWeekOfYear,
 			String secondWeekOfYear, String thirdWeekOfYear) {
-		return shareholderStructureRepository.getByOverFourHundreLotContinueIncrease(firstWeekOfYear, secondWeekOfYear, thirdWeekOfYear);
+		return shareholderStructureRepository.getByOverFourHundreLotContinueIncrease(firstWeekOfYear, secondWeekOfYear,
+				thirdWeekOfYear);
 	}
 
 	@BacchusCacheableWithLock(value = "longLivedCache", key = "#id")
 	public List<ShareholderStructure> getShareholderStructureByStockCodeDescWithDataBase(String stockCode) {
+//		stockDayPriceRepository
+		List<ShareholderStructure> shareholderStructures = shareholderStructureRepository
+				.getShareholderStructureByStockCodeDesc(stockCode);
+		shareholderStructures.stream().forEach(data -> {
+			List<StockDayPrice> stockDayPrices = stockDayPriceRepository.findThisWeekStockDayPrices(data.getStockCode(),
+					data.getWeekOfYear());
+	        Optional<StockDayPrice> minTradingDayPrice = stockDayPrices.stream()
+	                .min(Comparator.comparing(StockDayPrice::getTradingDay));
+
+	        // 找到最大的 tradingDay 的 StockDayPrice 对象
+	        Optional<StockDayPrice> maxTradingDayPrice = stockDayPrices.stream()
+	                .max(Comparator.comparing(StockDayPrice::getTradingDay));
+	        data.setClosingPrice(maxTradingDayPrice.isPresent() ? maxTradingDayPrice.get().getClosingPrice() : "0.0");
+	        data.setOpeningPrice(minTradingDayPrice.isPresent() ? minTradingDayPrice.get().getOpeningPrice() : "0.0");
+		});
 		return shareholderStructureRepository.getShareholderStructureByStockCodeDesc(stockCode);
 	}
-	
+
 	private ShareholderStructureService getSelf() {
 		return (ShareholderStructureService) AopContext.currentProxy();
 	}

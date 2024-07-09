@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.bigstock.sharedComponent.dto.SingleStockPriceBizVo;
-import com.bigstock.sharedComponent.service.RabbitMqService;
+import com.bigstock.sharedComponent.rabbitmq.RabbitMqService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import io.swagger.v3.oas.annotations.Operation;

@@ -27,6 +27,9 @@ public class ShareholderStructure {
 
 	@Column(name = "count_date")
 	private String countDate;
+	
+	@Column(name = "opening_price")
+	private String openingPrice;
 
 	@Column(name = "closing_price")
 	private String closingPrice;

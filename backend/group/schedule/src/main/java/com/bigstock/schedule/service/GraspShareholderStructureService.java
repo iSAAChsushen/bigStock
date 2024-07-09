@@ -43,8 +43,8 @@ public class GraspShareholderStructureService {
 	@Value("${schedule.task.scheduling.cron.expression.sync-start-date}")
 	private String syncStartDate;
 
-	@Value("${schedule.tdcc-open-api}")
-	private String tdccOpenApi;
+//	@Value("${schedule.tdcc-open-api}")
+//	private String tdccOpenApi;
 
 //	@Value("${schedule.chromeDriverPath.linux.chrome-path}")
 //	private String linuxChromePath;
@@ -66,7 +66,7 @@ public class GraspShareholderStructureService {
 			throws RestClientException, URISyntaxException, JsonMappingException, JsonProcessingException {
 		// 先抓DB裡面全部的代號資料
 		List<Map<Integer, String>> stockCodeWeekInfos = ChromeDriverUtils
-				.graspShareholderStructureFromTDCCApi(tdccOpenApi);
+				.graspShareholderStructureFromTDCCApi("https://openapi.tdcc.com.tw/v1/opendata/1-5");
 		List<ShareholderStructure> shareholderStructures = Lists.newArrayList();
 		stockCodeWeekInfos.stream().forEach(stockCodeWeekInfo -> {
 			String stockCode = stockCodeWeekInfo.get(37);

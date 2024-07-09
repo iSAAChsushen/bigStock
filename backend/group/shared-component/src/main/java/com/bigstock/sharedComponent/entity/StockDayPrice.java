@@ -48,6 +48,9 @@ public class StockDayPrice {
 	
 	@Column(name = "change")
 	private String change;
+	
+	@Column(name = "week_of_year")
+	private String weekOfYear;
 
 	@Getter
 	@Setter

@@ -1,4 +1,4 @@
-package com.bigstock.sharedComponent.service;
+package com.bigstock.sharedComponent.rabbitmq;
 
 import java.io.IOException;
 import java.util.Map;
@@ -10,6 +10,7 @@ import org.springframework.amqp.core.MessagePostProcessor;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Maps;
@@ -23,7 +24,7 @@ import com.rabbitmq.client.Delivery;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@Service
+@Component
 @RequiredArgsConstructor
 @Slf4j
 public class RabbitMqService {

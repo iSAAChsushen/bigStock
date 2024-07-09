@@ -1,4 +1,4 @@
-package com.bigstock.sharedComponent.infra;
+package com.bigstock.sharedComponent.rabbitmq;
 
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;

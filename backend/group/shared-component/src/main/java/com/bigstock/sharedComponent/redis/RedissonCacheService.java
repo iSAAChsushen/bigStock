@@ -1,4 +1,4 @@
-package com.bigstock.sharedComponent.service;
+package com.bigstock.sharedComponent.redis;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;

@@ -193,6 +193,7 @@ public class ChromeDriverUtils {
 			stockDayPrice.setTradingDay(tradeDate);
 			stockDayPrice.setStartOfWeekDate(startOfWeeDate);
 			stockDayPrice.setEndOfWeekDate(endOfWeekDate);
+			stockDayPrice.setWeekOfYear(today.getYear() + "W" + today.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
 			return stockDayPrice;
 		}).toList();
 	}
@@ -244,10 +245,10 @@ public class ChromeDriverUtils {
 			stockDayPrice.setHighPrice(map.get("High"));
 			stockDayPrice.setLowPrice(map.get("Low"));
 			stockDayPrice.setChange(map.get("Change"));
-			stockDayPrice.setTradingDay(new Date());
 			stockDayPrice.setTradingDay(date);
 			stockDayPrice.setStartOfWeekDate(startOfWeeDate);
 			stockDayPrice.setEndOfWeekDate(endOfWeekDate);
+			stockDayPrice.setWeekOfYear(today.getYear() + "W" + today.get(IsoFields.WEEK_OF_WEEK_BASED_YEAR));
 			return stockDayPrice;
 		}).toList();
 	}

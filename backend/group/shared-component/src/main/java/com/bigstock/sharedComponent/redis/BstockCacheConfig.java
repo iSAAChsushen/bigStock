@@ -1,4 +1,4 @@
-package com.bigstock.sharedComponent.infra;
+package com.bigstock.sharedComponent.redis;
 
 import java.time.Duration;
 import java.util.Collection;

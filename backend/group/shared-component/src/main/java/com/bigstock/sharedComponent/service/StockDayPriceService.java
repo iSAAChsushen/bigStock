@@ -36,8 +36,8 @@ public class StockDayPriceService {
 		return stockDayPriceRepository.findByStockCode(stockCode);
 	}
 	
-	public List<StockDayPrice> findByStockCodeAndDateRange(String stockCode, Date startDate, Date endDate) {
-		return stockDayPriceRepository.findThisWeekStockDayPrices(stockCode, startDate, endDate);
+	public List<StockDayPrice> findThisWeekStockDayPrices(String stockCode, String weekOfYear) {
+		return stockDayPriceRepository.findThisWeekStockDayPrices(stockCode, weekOfYear);
 	}
 	public Optional<StockDayPrice> findByStockCodeAndTradingDay(String stockCode, Date tradingDay){
 		return stockDayPriceRepository.findByStockCodeAndTradingDay(stockCode, tradingDay);
