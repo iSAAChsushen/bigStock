@@ -21,6 +21,7 @@ import com.bigstock.sharedComponent.dto.SingleStockPriceBizVo;
 import com.bigstock.sharedComponent.rabbitmq.RabbitMqService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+//import io.micrometer.tracing.annotation.NewSpan;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +43,7 @@ public class GatewayController {
 	}
 
 	//小小紀錄一下，如果要增加單個API Header作法，特別注意Authorization是保留字，加上去沒用 @Parameter(name = "Authorization1114", description = "jwt , start wih 'Bearer ....'", required = true, in = ParameterIn.HEADER)
+//	@NewSpan("stockShareholderStructure")
 	@Operation(summary = "個別股票價格", description = "")
 	@PostMapping("SingleStockPrice")
 	public ResponseEntity<String> SingleStockPrice(@RequestBody SingleStockPriceBizVo singleStockPriceBizVo) {
@@ -65,6 +67,7 @@ public class GatewayController {
 		}
 	}
 
+//	@NewSpan("stockShareholderStructure")
 	@Operation(summary = "持股大戶連續2個星期增加的股票查詢", description = "")
 	@GetMapping("shareholderStructureContinueIncreaseLastTowWeeks")
 	public ResponseEntity<String> getShareholderStructureContinueIncreaseLastTowWeeks() {

@@ -25,6 +25,9 @@ spring:
     properties:
       hibernate:
         show-sql: true
+  sleuth:
+    sampler:
+      probability: 1.0        
   redis:
     host: ${SPRING_REDIS_HOST}
     port: ${SPRING_REDIS_PORT}
@@ -62,3 +65,12 @@ schedule:
     url:
       tpex: https://www.tpex.org.tw/web/stock/aftertrading/daily_close_quotes/stk_quote_result.php?l=zh-tw&d={dateString}&s=asc
       twse: https://www.twse.com.tw/pcversion/zh/exchangeReport/MI_INDEX
+      
+opentracing:
+  jaeger:
+    udp-sender:
+      host: localhost
+      port: 6831
+    sampler:
+      type: const
+      param: 1         

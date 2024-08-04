@@ -6,7 +6,7 @@ server:
 #    key-store: classpath:container-sit.testesunbank.com.tw.jks
 #    key-store-password: ENC(KXcrgSoHASfYwGk2mmH8sRwkr4+DHY/kez+vPE0Pz2pRoYGWMjqw+r1eVs/41i6m)
 #    key-store-type: JKS
-spring:
+spring: 
   application:
     name: bigstock-biz
   main:
@@ -28,6 +28,9 @@ spring:
     properties:
       hibernate:
         show-sql: true
+  sleuth:
+    sampler:
+      probability: 1.0      
   redis:
     host: 127.0.0.1
     lettuce:
@@ -53,3 +56,16 @@ springdoc:
     path: /biz/swagger/v3/api-docs  
   swagger-ui:
     path: /biz/swagger/swagger-ui.html  
+    
+opentracing:
+  jaeger:
+    enabled: true
+    http-sender:
+      url: http://localhost:14268/api/traces
+    sampler:
+      type: const
+      param: 1
+    reporter:
+      log-spans: true
+      flush-interval: 1000
+      max-queue-size: 10000   

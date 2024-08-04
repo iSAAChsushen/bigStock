@@ -39,6 +39,9 @@ spring:
     properties:
       hibernate:
         show-sql: true
+  sleuth:
+    sampler:
+      probability: 1.0      
   mail:
     host: smtp.gmail.com
     port: 587
@@ -68,4 +71,17 @@ springdoc:
   swagger-ui:
     path: /auth/swagger/swagger-ui.html  
     enable: true
-    
+
+opentracing:
+  jaeger:
+    enabled: true
+    http-sender:
+      url: http://localhost:14268/api/traces
+    sampler:
+      type: const
+      param: 1
+    reporter:
+      log-spans: true
+      flush-interval: 1000
+      max-queue-size: 10000
+
