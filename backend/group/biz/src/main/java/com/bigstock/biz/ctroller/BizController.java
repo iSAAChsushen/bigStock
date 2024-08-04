@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bigstock.biz.service.BizService;
 import com.bigstock.sharedComponent.entity.ShareholderStructure;
 
+//import io.micrometer.tracing.annotation.NewSpan;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,8 @@ import lombok.RequiredArgsConstructor;
 public class BizController {
 
 	private final BizService bizService;
+	
+//	@NewSpan("stockShareholderStructure")
 	@Operation(summary = "個別股票持股分布", description = "")
 	@GetMapping("stockShareholderStructure/{stockCode}")
 	public ResponseEntity<List<ShareholderStructure>> getStockShareholderStructure(

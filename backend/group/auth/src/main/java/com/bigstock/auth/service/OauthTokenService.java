@@ -2,7 +2,9 @@ package com.bigstock.auth.service;
 
 import java.time.Duration;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
@@ -179,5 +181,18 @@ public class OauthTokenService {
 		// 設定 JWT 簽名
 		// 建立並返回 JWT
 		return builder.compact();
+	}
+
+	/**
+	 * 統計在線人數
+	 * @return
+	 */
+	public Long countValidAccessTokens() {
+		List<String> keys = Lists.newArrayList(redissonClient.getKeys().getKeysByPattern("access_token:*"));
+		long validTokenCount = keys.stream().filter(key -> {
+			RBucket<Object> bucket = redissonClient.getBucket(key);
+			return bucket.remainTimeToLive() > 0;
+		}).count();
+		return validTokenCount;
 	}
 }

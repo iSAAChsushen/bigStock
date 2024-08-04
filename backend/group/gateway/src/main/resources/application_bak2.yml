@@ -11,21 +11,21 @@ spring:
   application:
     name: bigstock-gateway
   rabbitmq:
-    host: 127.0.0.1
-    port: 5672
-    username: admin
-    password: rabbitmq
+    host: ${SPRING_RABBITMQ_HOST}
+    port: ${SPRING_RABBITMQ_PORT}
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
     virtual-host: /
     pool:
       channelCacheSize: 5    
   redis:
-    host: 127.0.0.1
-    port: 6379
+    host: ${SPRING_REDIS_HOST}
+    port: ${SPRING_REDIS_PORT}
     timeout: 5000
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/bstock
-    username: bstockuser
-    password: postgresql
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
     driver-class-name: org.postgresql.Driver
     hikari:
       maximum-pool-size: 20
@@ -35,10 +35,13 @@ spring:
     properties:
       hibernate:
         show-sql: true
+  sleuth:
+    sampler:
+      probability: 1.0      
   cloud:
     consul:
-      host: 127.0.0.1
-      port: 8500    
+      host: ${SPRING_CONSUL_HOST}
+      port: ${SPRING_CONSUL_PORT}    
     discovery:
       health-check-path: /actuator/health # 设置健康检查路径为 Actuator 的健康端点路径
       health-check-interval: 15s # 设置健康检查间隔为 15 秒
@@ -70,7 +73,7 @@ management:
   health:
     consul:
       enabled: true  
-      
+  
 springdoc:
   api-docs:
     path: /gateway/swagger/v3/api-docs     
@@ -89,3 +92,13 @@ springdoc:
       - url: /api/biz/swagger/v3/api-docs
         name: Biz Service
         primaryName: Biz Service
+        
+        
+opentracing:
+  jaeger:
+    udp-sender:
+      host: localhost
+      port: 6831
+    sampler:
+      type: const
+      param: 1        

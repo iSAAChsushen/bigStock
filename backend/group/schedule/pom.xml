@@ -23,7 +23,6 @@
 					<artifactId>springdoc-openapi-starter-webflux-api</artifactId>
 				</exclusion>
 			</exclusions>
-
 		</dependency>
 	</dependencies>
 	<build>

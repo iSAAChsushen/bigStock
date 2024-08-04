@@ -9,7 +9,8 @@ import org.springframework.context.annotation.FilterType;
 
 @SpringBootApplication()
 @ComponentScan(basePackages = { "com.bigstock.schedule", "com.bigstock.sharedComponent" }, excludeFilters = {
-		@ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.bigstock\\.sharedComponent\\.rabbitmq\\..*") })
+		@ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.bigstock\\.sharedComponent\\.rabbitmq\\..*"),
+		@ComponentScan.Filter(type = FilterType.REGEX, pattern = "com\\.bigstock\\.sharedComponent\\.jaeger\\..*") })
 @EnableAspectJAutoProxy(proxyTargetClass = true, exposeProxy = true)
 @EnableCaching
 public class ScheduleApp {
