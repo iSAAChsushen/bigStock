@@ -21,10 +21,10 @@ public class JaegerConfig {
 	@Value("${spring.application.name}")
 	private String applicationName;
   
-	@Value("${opentracing.sampler.param}")
+	@Value("${opentracing.jaeger.sampler.param}")
 	private float samplerParam;
 	
-	@Value("${opentracing.sampler.type}")
+	@Value("${opentracing.jaeger.sampler.type}")
 	private String samplerType;
 	
     @Bean
