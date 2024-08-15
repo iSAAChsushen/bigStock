@@ -73,11 +73,12 @@ opentracing:
   jaeger:
     enabled: true
     http-sender:
-      url: http://localhost:14268/api/traces
+      url: ${OPENTRACING_JAEGER_HTTP-SENDER_URL}
+      #http://localhost:14268/api/traces
     sampler:
       type: const
-      param: 1
+      param: ${OPENTRACING_JAEGER_SAMPLER_PARAM}
     reporter:
       log-spans: true
       flush-interval: 1000
-      max-queue-size: 10000
+      max-queue-size: 10000   

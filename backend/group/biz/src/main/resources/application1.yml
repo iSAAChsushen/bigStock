@@ -27,10 +27,7 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
-        show-sql: true
-  sleuth:
-    sampler:
-      probability: 1.0      
+        show-sql: true   
   redis:
     host: 127.0.0.1
     lettuce:
@@ -64,8 +61,4 @@ opentracing:
       url: http://localhost:14268/api/traces
     sampler:
       type: const
-      param: 1
-    reporter:
-      log-spans: true
-      flush-interval: 1000
-      max-queue-size: 10000   
+      param: 0.1
