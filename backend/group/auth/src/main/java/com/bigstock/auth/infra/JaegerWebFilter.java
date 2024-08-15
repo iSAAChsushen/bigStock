@@ -31,6 +31,11 @@ public class JaegerWebFilter implements WebFilter {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
+    	
+        if ( exchange.getRequest().getURI().getPath().startsWith("/actuator")) {
+            return chain.filter(exchange);
+        }
+    	
         Span span = tracer.buildSpan(applicationName).start();
         Scope scope = tracer.activateSpan(span);
 

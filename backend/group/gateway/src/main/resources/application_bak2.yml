@@ -96,9 +96,14 @@ springdoc:
         
 opentracing:
   jaeger:
-    udp-sender:
-      host: localhost
-      port: 6831
+    enabled: true
+    http-sender:
+      url: ${OPENTRACING_JAEGER_HTTP-SENDER}
+      #http://localhost:14268/api/traces
     sampler:
       type: const
-      param: 1        
+      param: ${OPENTRACING_JAEGER_SAMPLER_PARAM}
+    reporter:
+      log-spans: true
+      flush-interval: 1000
+      max-queue-size: 10000       

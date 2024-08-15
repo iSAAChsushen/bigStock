@@ -99,7 +99,7 @@ opentracing:
       url: http://localhost:14268/api/traces
     sampler:
       type: const
-      param: 1
+      param: 0.1
     reporter:
       log-spans: true
       flush-interval: 1000
