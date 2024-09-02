@@ -43,10 +43,12 @@ public class BigStockGatewayCustomWebFilter implements WebFilter {
 
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, WebFilterChain chain) {
-		log.info("Request URL: {}", exchange.getRequest().getURI().toString());
-
 		ServerHttpRequest request = exchange.getRequest();
 		ServerHttpResponse response = exchange.getResponse();
+		if(!request.getPath().value().startsWith("/actuator/")) {
+			log.info("Request URL: {}", exchange.getRequest().getURI().toString());
+		}
+
 		try {
 			if (request.getPath().value().startsWith("/actuator/") || request.getPath().value().startsWith("/auth/")
 					|| request.getPath().value().startsWith("/api/biz/swagger")

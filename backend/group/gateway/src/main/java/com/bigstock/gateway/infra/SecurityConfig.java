@@ -81,6 +81,8 @@ public class SecurityConfig {
 						.pathMatchers(HttpMethod.GET, "/gateway/swagger/**").permitAll()
 						.pathMatchers(HttpMethod.GET, "/gateway/**")
 						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
+						.pathMatchers(HttpMethod.PATCH, "/schedule/**")
+						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
 						.pathMatchers(HttpMethod.GET, "/biz/**")		
 						.access(new JwtReactiveAuthorizationManager(List.of("Admin", "Member", "User")))
 						.pathMatchers(HttpMethod.GET, "/api/biz/**")		
